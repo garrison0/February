@@ -42,7 +42,7 @@ function love.load()
 	enemies = {}
 	for i = 1,7 do
 		x_iter = x_iter * i
-		enemy = {loc = {x_iter, 100}, dx = 0, dy = 100}
+		enemy = {loc = {x_iter, 100}, dx = 0, dy = 100, step = 5}
 		table.insert(enemies, enemy)
 	end
 end
@@ -73,7 +73,7 @@ function love.update(dt)
 
 	-- update the enemies
 	for i, v in ipairs(enemies) do
-		v.loc[1] = v.loc[1] + v.dx * dt
+		v.loc[1] = v.loc[1] + math.sin(v.loc[2] / 10) * 500 * dt
 		v.loc[2] = v.loc[2] + v.dy * dt
 	end
 
