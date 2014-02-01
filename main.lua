@@ -4,8 +4,18 @@ note -- (0,0) is top left
 
 --]]
 
+
+
+
 -- ship image
 ship = love.graphics.newImage("/graphics/ship.png")
+
+-- enemy ship image
+enemy_ship = love.graphics.newImage("/graphics/enemy.png")
+
+
+
+
 
 function love.load()
 	-- player table
@@ -27,6 +37,14 @@ function love.load()
 	bullets = {}
 
 
+	-- enemies
+	x_iter = 75
+	enemies = {}
+	for i = 1,7 do
+		x_iter = x_iter * i
+		enemy = {loc = {x_iter, 100}, dx = 0, dy = 100}
+		table.insert(enemies, enemy)
+	end
 end
 
 function love.update(dt)
@@ -52,6 +70,12 @@ function love.update(dt)
 	end
 
 	player.fire_delay = player.fire_delay - dt
+
+	-- update the enemies
+	for i, v in ipairs(enemies) do
+		v.loc[1] = v.loc[1] + v.dx * dt
+		v.loc[2] = v.loc[2] + v.dy * dt
+	end
 
 end
 
@@ -81,14 +105,16 @@ function love.mousereleased(x, y, button)
 end
 
 function love.draw()
+	-- draw player
     love.graphics.draw(ship, player.loc[1], player.loc[2])
 
+    --draw bullets
     for i, v in ipairs(bullets) do
     	love.graphics.circle("fill",v.loc[1],v.loc[2],10,10)
     end
 
-    for i, v in ipairs(bullets) do
-    	love.graphics.circle("fill",v.loc[1],v.loc[2],10,10)
+    --draw enemies
+    for i, v in ipairs(enemies) do
+    	love.graphics.draw(enemy_ship, v.loc[1], v.loc[2])
     end
-
 end
