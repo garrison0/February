@@ -14,31 +14,18 @@ ship = love.graphics.newImage("/graphics/ship.png")
 
 function love.load()
 	-- player table
-	player = {a=0, s=0, d=0, w=0}
-	player.x = 350
-	player.y = 350
+	player = {a=0, s=0, d=0, w=0, space=0}
+	player.loc = {350,350}
 	player.dx = 100
 	player.dy = 100
 end
 
 function love.update(dt)
 	-- update the player
-	player.x = player.x - player.dx * dt * player.a
-						+ player.dx * dt * player.d
-	player.y = player.y + player.dy * dt * player.s
-						- player.dy * dt * player.w
-
-	if love.keyboard.isDown("left") then
-		player.x = player.x - player.dx * dt
-	elseif love.keyboard.isDown("right") then
-		player.x = player.x + player.dx * dt
-	end
-
-	if love.keyboard.isDown("up") then
-		player.y = player.y - player.dy * dt
-	elseif love.keyboard.isDown("down") then
-		player.y = player.y + player.dy * dt
-	end
+	player.loc[1] = player.loc[1] - player.dx * dt * player.a
+								  + player.dx * dt * player.d
+	player.loc[2] = player.loc[2] + player.dy * dt * player.s
+								  - player.dy * dt * player.w
 end
 
 function love.keypressed(key)
@@ -50,5 +37,5 @@ function love.keyreleased(key)
 end
 
 function love.draw()
-    love.graphics.draw(ship, player.x, player.y)
+    love.graphics.draw(ship, player.loc[1], player.loc[2])
 end
