@@ -18,8 +18,10 @@ function love.load()
 
 	player = {a=0, s=0, d=0, w=0, e=0}
 	player.loc = {350,350}
-	player.dx = 100
-	player.dy = 100
+	player.dx = 300
+	player.dy = 250
+	player.width = 64
+	player.height = 64
 	player.fire_delay = 0;
 
 	bullets = {}
@@ -35,8 +37,8 @@ function love.update(dt)
 								  - player.dy * dt * player.w
 
 	if (player.shooting == true) and player.fire_delay <= 0 then
-		bullet = {loc={player.loc[1],player.loc[2]}, dy=1000, life=.5}
-		player.fire_delay = 1
+		bullet = {loc={player.loc[1] + player.width/2, player.loc[2]}, dy=1000, life=.35}
+		player.fire_delay = .5
 		table.insert(bullets,bullet)
 	end
 
