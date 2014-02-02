@@ -1,6 +1,13 @@
 --[[
 note -- (0,0) is top left
 
+TO DO:
+1. scrolling background
+
+2. physics collision
+
+3. main "game" class to script levels/check gamestate
+
 
 --]]
 
@@ -14,6 +21,14 @@ ship = love.graphics.newImage("/graphics/ship.png")
 enemy_ship = love.graphics.newImage("/graphics/enemy.png")
 
 
+-- Game metatable
+Game = {}
+Game.index = Game
+
+function Game.new()
+	return setmetatable({gamestate = ""}, Game)
+end
+
 -- Player metatable
 Player = {}
 Player.__index = Player
@@ -25,19 +40,18 @@ function Player.new(loc, dx, dy)
 				a = 0, s = 0, d = 0, w = 0}, Player)
 end
 
--- 
-function love.load()
-	-- player table
-	--[[
-	player = {a=0, s=0, d=0, w=0, space=0, height=64, width =64}
-	player.shooting = false
+-- Enemy metatable
+Enemy = {}
+Enemy.__index = Enemy
 
-	player = {a=0, s=0, d=0, w=0, e=0}
-	player.loc = {350,350}
-	player.dx = 300
-	player.dy = 250
-	player.fire_delay = 0;
-	--]]
+function Enemy.new(loc, dx, dy)
+	return setmetatable({loc = loc or {0,0}, dx = dx or 0, dy = dy or 0, amplitude = 200}, Enemy)
+end
+
+
+
+function love.load()
+	-- player
 	player = Player.new({350, 350}, 300, 250)
 
 	bullets = {}
@@ -47,7 +61,7 @@ function love.load()
 	enemies = {}
 	for i = 1,7 do
 		x_iter = 95 * i
-		enemy = {loc = {x_iter, 0}, dx = 0, dy = 100, amplitude = 200}
+		enemy = Enemy.new({x_iter, 0}, 0, 100)
 		table.insert(enemies, enemy)
 	end
 end
