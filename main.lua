@@ -1,4 +1,5 @@
 require "utility"
+
 --[[
 note -- (0,0) is top left
 
@@ -32,6 +33,30 @@ function CollisionSphere.__add(a, b)
 	}
 end
 
+
+-- Axis-Aligned Bounding Box
+AABB = {}
+AABB.__index = AABB
+
+function AABB:new(pos, width, height)
+	local object = {
+		pos = Vector:new(pos[1], pos[2]),
+		half_width = width/2 or 0, half_height = height/2 or 0}
+	return setmetatable(object, AABB)
+end
+
+function AABB:update(dt, pos)
+	
+end
+
+
+
+
+function AABBvsAABB()
+
+end
+
+
 -- ship image
 ship = love.graphics.newImage("/graphics/ship.png")
 
@@ -61,8 +86,8 @@ end
 Player = {}
 Player.__index = Player
 
-function Player.new(loc, dx, dy)
-	return setmetatable({loc = loc or {0, 0}, dx = dx or 0, dy = dy or 0, 
+function Player.new(pos, vel)
+	return setmetatable({pos = pos or {0, 0}, vel = vel or {0,0}, 
 				shooting = false, fire_delay = 0, 
 				width = 64, height = 64, bulletLevel = 1,
 				a = 0, s = 0, d = 0, w = 0}, Player)
@@ -71,15 +96,15 @@ end
 function Player.shoot()
 	-- level 1
 	if (player.bulletLevel == 1) then
-		bullet = {loc={player.loc[1] + player.width/2, player.loc[2]}, dy=1000, life=.35}
+		bullet = {pos={player.pos[1] + player.width/2, player.pos[2]}, vel={0,1000}, life=.35}
 		player.fire_delay = .5
 		table.insert(bullets,bullet)
 	end
 
 	-- level 2
 	if (player.bulletLevel == 2) then
-		bullet = {loc={player.loc[1] + player.width/4, player.loc[2]}, dy=1000, life=.4}
-		bullet2 = {loc={player.loc[1] + 3*player.width/4, player.loc[2]}, dy=1000, life=.4}
+		bullet = {pos={player.pos[1] + player.width/4, player.pos[2]}, vel={0,1000}, life=.4}
+		bullet2 = {pos={player.pos[1] + 3*player.width/4, player.pos[2]}, vel={0,1000}, life=.4}
 		player.fire_delay = .4
 		table.insert(bullets, bullet)
 		table.insert(bullets, bullet2)
@@ -87,10 +112,10 @@ function Player.shoot()
 
 	-- level 3
 	if (player.bulletLevel == 3) then
-		bullet = {loc={player.loc[1] + player.width/4, player.loc[2]}, dy=1000, life=.5}
-		bullet2 = {loc={player.loc[1] + 3*player.width/4, player.loc[2]}, dy=1000, life=.5}
-		bullet3 = {loc={player.loc[1] + player.width, player.loc[2]}, dx = 200, dy=800, life=.5}
-		bullet4 = {loc={player.loc[1], player.loc[2]}, dx = -200, dy=800, life=.5}
+		bullet = {pos={player.pos[1] + player.width/4, player.pos[2]}, vel={0,1000}, life=.5}
+		bullet2 = {pos={player.pos[1] + 3*player.width/4, player.pos[2]}, vel={0,1000}, life=.5}
+		bullet3 = {pos={player.pos[1] + player.width, player.pos[2]}, vel = {200,800}, life=.5}
+		bullet4 = {pos={player.pos[1], player.pos[2]}, vel = {-200, 800}, life=.5}
 		player.fire_delay = .2
 		table.insert(bullets, bullet)
 		table.insert(bullets, bullet2)
@@ -104,8 +129,8 @@ end
 Enemy = {}
 Enemy.__index = Enemy
 
-function Enemy.new(loc, dx, dy)
-	return setmetatable({loc = loc or {0,0}, dx = dx or 0, dy = dy or 0, amplitude = 200}, Enemy)
+function Enemy.new(pos, vel)
+	return setmetatable({pos = pos or {0,0}, vel = vel or {0,0}, amplitude = 200}, Enemy)
 end
 
 
@@ -113,33 +138,22 @@ end
 Bullet = {}
 Bullet.__index = Bullet
 
---[[
-function Bullet.new(loc, dx, dy, life, damage)
-	return setmetatable({})
+
+function Bullet.new(pos, vel, life, damage)
+	local object = {pos, vel, life, damage}
+	return setmetatable(object, Bullet)
 end
-]]
+
 
 
 function love.load()
 	Test_Vector()
 
-	-- player table
-	--[[
-	player = {a=0, s=0, d=0, w=0, space=0, height=64, width =64}
-	player.shooting = false
-
-	player = {a=0, s=0, d=0, w=0, e=0}
-	player.loc = {350,350}
-	player.dx = 300
-	player.dy = 250
-	player.fire_delay = 0;
-	--]]
-	player = Player.new({350, 350}, 300, 250)
 	-- game
 	game = Game.new(800, 700)
 
 	-- player
-	player = Player.new({350, 350}, 300, 250)
+	player = Player.new({350, 350}, {300, 250})
 	player.bulletLevel = 3
 	bullets = {}
 
@@ -147,17 +161,17 @@ function love.load()
 	enemies = {}
 	for i = 1,7 do
 		x_iter = 95 * i
-		enemy = Enemy.new({x_iter, 0}, 0, 100)
+		enemy = Enemy.new({x_iter, 0}, {0, 100})
 		table.insert(enemies, enemy)
 	end
 end
 
 function love.update(dt)
 	-- update the player
-	player.loc[1] = player.loc[1] - player.dx * dt * player.a
-								  + player.dx * dt * player.d
-	player.loc[2] = player.loc[2] + player.dy * dt * player.s
-								  - player.dy * dt * player.w
+	player.pos[1] = player.pos[1] - player.vel[1] * dt * player.a
+								  + player.vel[1] * dt * player.d
+	player.pos[2] = player.pos[2] + player.vel[2] * dt * player.s
+								  - player.vel[2] * dt * player.w
 
 	-- shoot bullets
 	if (player.shooting == true) and player.fire_delay <= 0 then
@@ -168,8 +182,8 @@ function love.update(dt)
 	for i, v in ipairs(bullets) do
 		v.life = v.life - dt;
 		print(v.life)
-		v.loc[2] = v.loc[2] - v.dy * dt
-		v.loc[1] = v.loc[1] + (v.dx or 0) * dt
+		v.pos[2] = v.pos[2] - v.vel[2] * dt
+		v.pos[1] = v.pos[1] + (v.vel[1] or 0) * dt
 		if v.life <= 0 then
 			table.remove(bullets,i)
 		end
@@ -179,8 +193,8 @@ function love.update(dt)
 
 	-- update the enemies
 	for i, v in ipairs(enemies) do
-		v.loc[1] = v.loc[1] + math.sin(v.loc[2] / 10) * v.amplitude * dt
-		v.loc[2] = v.loc[2] + v.dy * dt
+		v.pos[1] = v.pos[1] + math.sin(v.pos[2] / 10) * v.amplitude * dt
+		v.pos[2] = v.pos[2] + v.vel[2] * dt
 	end
 
 end
@@ -212,15 +226,15 @@ end
 
 function love.draw()
 	-- draw player
-    love.graphics.draw(ship, player.loc[1], player.loc[2])
+    love.graphics.draw(ship, player.pos[1], player.pos[2])
 
     --draw bullets
     for i, v in ipairs(bullets) do
-    	love.graphics.circle("line",v.loc[1],v.loc[2],10,10)
+    	love.graphics.circle("line",v.pos[1],v.pos[2],10,10)
     end
 
     --draw enemies
     for i, v in ipairs(enemies) do
-    	love.graphics.draw(enemy_ship, v.loc[1], v.loc[2])
+    	love.graphics.draw(enemy_ship, v.pos[1], v.pos[2])
     end
 end
