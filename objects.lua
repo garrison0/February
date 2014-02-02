@@ -1,6 +1,15 @@
 require "object"
 require "utility"
 
+BoundingAggregate = Object:new({class = "BoundingAggregate"})
+
+	function BoundingAggregate:new(aggregate)
+		local boundingAggregate = Object:new(aggregate or {})
+		setmetatable(aggregate, self)
+		self.__index = self
+		return boundingAggregate
+	end
+
 BoundingSphere = Object:new({class = "BoundingSphere"})
 
 	function BoundingSphere:new(center, radius)
@@ -46,13 +55,26 @@ BoundingSphere = Object:new({class = "BoundingSphere"})
 		end
 	end
 
+BoundingTriangle = Object:new({class = "BoundingTriangle"})
+	
+	function BoundingTriangle:New(p1, p2, p3)
+		local triangle = Object:new{p1 = p1 or Vector:new(0,0),
+									p2 = p2 or Vector:new(0,0),
+									p3 = p3 or Vector:new(0,0)}
+		setmetatable(triangle, self)
+		self.__index = self
+		return triangle
+	end
+
+	-- TO DO: translation functions
+
 Player = Object:new({class = "Player"})
 
 	function Player:new(pos, vel)
 		local player = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			shooting = false, fire_delay = 0, width = 64, height = 64,
-			bulletLevel = 1, a = 0, s = 0, d = 0, w = 0
+			bulletLevel = 1, bullets = {}, a = 0, s = 0, d = 0, w = 0
 		})
 		setmetatable(player,self)
 		self.__index = self
@@ -62,10 +84,64 @@ Player = Object:new({class = "Player"})
 	function Player:collision()
 		local v = Vector:new(self.pos.x + self.width/2, 
 							 self.pos.y + self.height/2)
-		return BoundingSphere:new(v,30)
+		return BoundingAggregate:new({BoundingSphere:new(v,30)})
 	end
 
 	-- TODO: Move Player-Member functions in here
+	function Player:update(dt)
+		-- image
+		self.pos.x = self.pos.x - self.vel.x * dt * self.a
+									  + self.vel.x * dt * self.d
+		self.pos.y = self.pos.y + self.vel.y * dt * self.s
+									  - self.vel.y * dt * self.w
+
+		-- delay
+		self.fire_delay = self.fire_delay - dt
+	end
+
+	function Player:shoot()
+		-- level 1
+		if (player.bulletLevel == 1) then
+			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
+										Vector:new(0,1000), .35)
+
+			player.fire_delay = .5
+			table.insert(player.bullets, bullet)
+		end
+
+		-- level 2
+		if (player.bulletLevel == 2) then
+			bullet = Bullet:new(Vector:new(player.pos.x + player.width/4, player.pos.y),
+										Vector:new(0,1000), .4)
+			bullet2 = Bullet:new(Vector:new(player.pos.x + 3*player.width/4, player.pos.y), 
+										Vector:new(0,1000), .4)
+
+			player.fire_delay = .4
+			table.insert(player.bullets, bullet)
+			table.insert(player.bullets, bullet2)
+		end
+
+		-- level 3
+		if (player.bulletLevel == 3) then
+			bullet = Bullet:new(Vector:new(player.pos.x + player.width/4, player.pos.y), 
+										Vector:new(0,1000), .5)
+
+			bullet2 = Bullet:new(Vector:new(player.pos.x + 3*player.width/4, player.pos.y), 
+										Vector:new(0,1000), .5)
+
+			bullet3 = Bullet:new(Vector:new(player.pos.x + player.width, player.pos.y), 
+										Vector:new(200,800), .5)
+
+			bullet4 = Bullet:new(Vector:new(player.pos.x, player.pos.y), 
+										Vector:new(-200,800), .5)
+
+			player.fire_delay = .01
+			table.insert(player.bullets, bullet)
+			table.insert(player.bullets, bullet2)
+			table.insert(player.bullets, bullet3)
+			table.insert(player.bullets, bullet4)
+		end
+	end
 
 Enemy = Object:new({class = "Enemy"})
 
@@ -82,10 +158,14 @@ Enemy = Object:new({class = "Enemy"})
 	function Enemy:collision()
 		local v = Vector:new(self.pos.x + self.width/2, 
 							 self.pos.y + self.height/2)
-		return BoundingSphere:new(v,15)
+		return BoundingAggregate:new({BoundingSphere:new(v,15)})
 	end
 
-	-- TODO: Move Enemy-Member functions in here
+	function Enemy:update(dt)
+		self.pos.x = self.pos.x + math.sin(self.pos.y / 10) * self.amplitude * dt
+		self.pos.y = self.pos.y + self.vel.y * dt
+
+	end
 
 Bullet = Object:new({class = "Bullet"})
 
@@ -102,7 +182,12 @@ Bullet = Object:new({class = "Bullet"})
 	function Bullet:collision()
 		local v = Vector:new(self.pos.x + self.width/2, 
 							 self.pos.y + self.height/2)
-		return BoundingSphere:new(v,4)
+		return BoundingAggregate:new({BoundingSphere:new(v,4)})
 	end
 
-	-- TODO: Move Bullet-Member functions in here
+	function Bullet:update(dt)
+		self.life = self.life - dt;
+		self.pos.y = self.pos.y - self.vel.y * dt
+		self.pos.x = self.pos.x + (self.vel.x or 0) * dt
+
+end
