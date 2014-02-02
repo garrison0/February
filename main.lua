@@ -1,4 +1,6 @@
+require "object"
 require "utility"
+require "objects"
 
 --[[
 note -- (0,0) is top left
@@ -15,23 +17,6 @@ TO DO:
 5. bleeps and bloops
 
 --]]
-
-CollisionSphere = {}
-
-function CollisionSphere:new(h, k, r)
-	local object = {
-		h = h or 0, k = k or 0, r = r or 0
-	}
-	setmetatable(object,self)
-	self.__index = self
-	return object
-end
-
-function CollisionSphere.__add(a, b)
-	local object = {
-		h = a.h + b.h, k = a.k + b.k, r = 0
-	}
-end
 
 -- Axis-Aligned Bounding Box
 AABB = {}
@@ -54,6 +39,7 @@ end
 	update():
 		pos : Vector
 ]]
+--[[
 function AABB:update(pos)
 	self.pos = pos
 end
@@ -97,11 +83,10 @@ function AABBvsAABB(a, b)
 				-- fix the y overlap and/or destroy object
 
 			end
-			--]]
 		end
 	end
 end
-
+--]]
 -- ship image
 ship = love.graphics.newImage("/graphics/ship.png")
 
@@ -129,17 +114,6 @@ function Game:setState(state)
 end
 
 -- Player metatable
-Player = {}
-Player.__index = Player
-
-function Player:new(pos, vel)
-	self.body = AABB:new(pos, 32, 32)
-	local object = {pos = pos or {0, 0}, vel = vel or {0,0}, 
-					shooting = false, fire_delay = 0, 
-					width = 64, height = 64, bulletLevel = 1,
-					a = 0, s = 0, d = 0, w = 0}
-	return setmetatable(object, self)
-end
 
 function Player.shoot()
 	-- level 1
@@ -196,18 +170,7 @@ function Player:update(dt)
 	self.fire_delay = self.fire_delay - dt
 
 	-- physical body
-	self.body:update(self.pos)
-end
-
--- Enemy metatable
-Enemy = {}
-Enemy.__index = Enemy
-
-function Enemy:new(pos, vel)
-	-- physical component
-	self.body = AABB:new(pos, 16, 16)
-	local object = {pos = pos or {0,0}, vel = vel or {0,0}, amplitude = 200}
-	return setmetatable(object, self)
+	--self.body:update(self.pos)
 end
 
 function Enemy:update(dt)
@@ -215,18 +178,7 @@ function Enemy:update(dt)
 	self.pos.x = self.pos.x + math.sin(self.pos.y / 10) * self.amplitude * dt
 	self.pos.y = self.pos.y + self.vel.y * dt
 	-- physical component
-	self.body:update(self.pos)
-end
-
--- Bullet metatable
-Bullet = {}
-Bullet.__index = Bullet
-
-function Bullet:new(pos, vel, life, damage)
-	-- physical componenet
-	--self.body = AABB:new(pos, 5, 5)
-	local object = {pos = pos or 0, vel = vel or 0, life = life or 0, damage = damage or 0}
-	return setmetatable(object, self)
+	--self.body:update(self.pos)
 end
 
 function Bullet:update(dt)
@@ -237,6 +189,24 @@ function Bullet:update(dt)
 
 	-- physical body
 	--self.body:update(self.pos)
+end
+
+
+--[[
+	detect whether or not two tables, a and b, collide
+--]]
+function detect(a, b)
+	local a_sphere = a:collision(); b_sphere = b:collision()
+	if a_sphere and b_sphere then
+		local dist = (a_sphere.center - b_sphere.center):norm()
+		if dist - a_sphere.radius - b_sphere.radius <= 0 then
+			return true
+		else
+			return false
+		end
+	else
+		error("detect: Objects do not support collision behavior")
+	end
 end
 
 function love.load()
@@ -281,8 +251,17 @@ function love.update(dt)
 	for i, v in ipairs(enemies) do
 		-- check for collisions with player
 		v:update(dt)
-		if AABBvsAABB(v, player) then
+		if detect(v, player) then
 			table.remove(enemies, i)
+		end
+	end
+
+	for i, v in ipairs(bullets) do
+		for j, k in ipairs(enemies) do
+			if detect(v,k) then
+				table.remove(enemies,j)
+				table.remove(bullets,i)
+			end
 		end
 	end
 end

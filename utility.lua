@@ -1,9 +1,9 @@
-Vector = {x = 0, y = 0}
+require "object"
+
+Vector = Object:new({class = "Vector"})
 
 function Vector:new(x, y)
-	local vector = {
-		x = x or 0, y = y or 0
-	}
+	local vector = Object:new({x = x or 0, y = y or 0})
 	setmetatable(vector,self)
 	self.__index = self
 	return vector
