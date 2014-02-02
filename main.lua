@@ -63,11 +63,24 @@ function Player.shoot()
 
 	-- level 2
 	if (player.bulletLevel == 2) then
-		bullet = {loc={player.loc[1] + player.width/4, player.loc[2]}, dy=1000, life=.35}
-		bullet2 = {loc={player.loc[1] + 3*player.width/4, player.loc[2]}, dy=1000, life=.35}
-		player.fire_delay = .5
+		bullet = {loc={player.loc[1] + player.width/4, player.loc[2]}, dy=1000, life=.4}
+		bullet2 = {loc={player.loc[1] + 3*player.width/4, player.loc[2]}, dy=1000, life=.4}
+		player.fire_delay = .4
 		table.insert(bullets, bullet)
 		table.insert(bullets, bullet2)
+	end
+
+	-- level 3
+	if (player.bulletLevel == 3) then
+		bullet = {loc={player.loc[1] + player.width/4, player.loc[2]}, dy=1000, life=.5}
+		bullet2 = {loc={player.loc[1] + 3*player.width/4, player.loc[2]}, dy=1000, life=.5}
+		bullet3 = {loc={player.loc[1] + player.width, player.loc[2]}, dx = 200, dy=800, life=.5}
+		bullet4 = {loc={player.loc[1], player.loc[2]}, dx = -200, dy=800, life=.5}
+		player.fire_delay = .2
+		table.insert(bullets, bullet)
+		table.insert(bullets, bullet2)
+		table.insert(bullets, bullet3)
+		table.insert(bullets, bullet4)
 	end
 end
 
@@ -98,7 +111,7 @@ function love.load()
 
 	-- player
 	player = Player.new({350, 350}, 300, 250)
-	player.bulletLevel = 2
+	player.bulletLevel = 3
 	bullets = {}
 
 	-- enemies
@@ -127,6 +140,7 @@ function love.update(dt)
 		v.life = v.life - dt;
 		print(v.life)
 		v.loc[2] = v.loc[2] - v.dy * dt
+		v.loc[1] = v.loc[1] + (v.dx or 0) * dt
 		if v.life <= 0 then
 			table.remove(bullets,i)
 		end
