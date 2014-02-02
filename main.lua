@@ -52,15 +52,52 @@ end
 
 --[[
 	update():
-		dt : float
 		pos : Vector
 ]]
-function AABB:update(dt, pos)
-	self.pos = self.pos + (pos * dt)
+function AABB:update(pos)
+	self.pos = pos
 end
 
-function AABBvsAABB()
+-- Collision Detection
+function AABBvsAABB(a, b)
+	-- Vector from A to B
+	n = a.body.pos - b.body.pos
 
+	-- calculate overlap on X axis
+	x_overlap = a.body.half_width + b.body.half_width - math.abs(n.x)
+
+	-- SAT/Seperating Axis Theorem
+	if (x_overlap > 0) then
+
+		-- repeat for y
+		y_overlap = a.body.half_height + b.body.half_height - math.abs(n.y)
+
+		-- SAT
+		if (y_overlap > 0) then
+
+			-- Collision detected.
+			-- Axis of least penetration:
+			if(x_overlap > y_overlap) then
+				if(n.x < 0) then
+					normal = Vector(-1, 0)
+				else
+					normal = Vector(1, 0)
+				end
+
+				-- fix the x overlap and/or destroy object
+
+			else
+				if(n.x < 0) then
+					normal = Vector(0, -1)
+				else
+					normal = Vector(0, 1)
+				end
+
+				-- fix the y overlap and/or destroy object
+
+			end
+		end
+	end
 end
 
 -- ship image
@@ -94,24 +131,30 @@ Player = {}
 Player.__index = Player
 
 function Player:new(pos, vel)
-	return setmetatable({pos = pos or {0, 0}, vel = vel or {0,0}, 
-				shooting = false, fire_delay = 0, 
-				width = 64, height = 64, bulletLevel = 1,
-				a = 0, s = 0, d = 0, w = 0}, Player)
+	local object = {pos = pos or {0, 0}, vel = vel or {0,0}, 
+					shooting = false, fire_delay = 0, 
+					width = 64, height = 64, bulletLevel = 1,
+					a = 0, s = 0, d = 0, w = 0}
+	return setmetatable(object, self)
 end
 
 function Player.shoot()
 	-- level 1
 	if (player.bulletLevel == 1) then
-		bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), Vector:new(0,1000), .35)
+		bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
+									Vector:new(0,1000), .35)
+
 		player.fire_delay = .5
 		table.insert(bullets, bullet)
 	end
 
 	-- level 2
 	if (player.bulletLevel == 2) then
-		bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), Vector:new(0,1000), .4)
-		bullet2 = Bullet:new(Vector:new(player.pos.x + 3*player.width/4, player.pos.y), Vector:new(0,1000), .4)
+		bullet = Bullet:new(Vector:new(player.pos.x + player.width/4, player.pos.y),
+									Vector:new(0,1000), .4)
+		bullet2 = Bullet:new(Vector:new(player.pos.x + 3*player.width/4, player.pos.y), 
+									Vector:new(0,1000), .4)
+
 		player.fire_delay = .4
 		table.insert(bullets, bullet)
 		table.insert(bullets, bullet2)
@@ -119,7 +162,7 @@ function Player.shoot()
 
 	-- level 3
 	if (player.bulletLevel == 3) then
-		bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
+		bullet = Bullet:new(Vector:new(player.pos.x + player.width/4, player.pos.y), 
 									Vector:new(0,1000), .5)
 
 		bullet2 = Bullet:new(Vector:new(player.pos.x + 3*player.width/4, player.pos.y), 
@@ -139,12 +182,25 @@ function Player.shoot()
 	end
 end
 
+function Player:update(dt)
+	-- image
+	self.pos.x = self.pos.x - self.vel.x * dt * self.a
+								  + self.vel.x * dt * self.d
+	self.pos.y = self.pos.y + self.vel.y * dt * self.s
+								  - self.vel.y * dt * self.w
+
+	-- delay
+	self.fire_delay = self.fire_delay - dt
+	-- physical body
+end
+
 -- Enemy metatable
 Enemy = {}
 Enemy.__index = Enemy
 
 function Enemy:new(pos, vel)
-	return setmetatable({pos = pos or {0,0}, vel = vel or {0,0}, amplitude = 200}, self)
+	local object = {pos = pos or {0,0}, vel = vel or {0,0}, amplitude = 200}
+	return setmetatable(object, self)
 end
 
 -- Bullet metatable
@@ -154,6 +210,15 @@ Bullet.__index = Bullet
 function Bullet:new(pos, vel, life, damage)
 	local object = {pos = pos or 0, vel = vel or 0, life = life or 0, damage = damage or 0}
 	return setmetatable(object, self)
+end
+
+function Bullet:update(dt)
+	-- image
+	self.life = self.life - dt;
+	self.pos.y = self.pos.y - self.vel.y * dt
+	self.pos.x = self.pos.x + (self.vel.x or 0) * dt
+
+	-- physical body
 end
 
 function love.load()
@@ -178,10 +243,7 @@ end
 
 function love.update(dt)
 	-- update the player
-	player.pos.x = player.pos.x - player.vel.x * dt * player.a
-								  + player.vel.x * dt * player.d
-	player.pos.y = player.pos.y + player.vel.y * dt * player.s
-								  - player.vel.y * dt * player.w
+	player:update(dt)
 
 	-- shoot bullets
 	if (player.shooting == true) and player.fire_delay <= 0 then
@@ -190,16 +252,12 @@ function love.update(dt)
 
 	-- update bullets
 	for i, v in ipairs(bullets) do
-		v.life = v.life - dt;
-		print(v.life)
-		v.pos.y = v.pos.y - v.vel.y * dt
-		v.pos.x = v.pos.x + (v.vel.x or 0) * dt
+		v:update(dt)
+
 		if v.life <= 0 then
 			table.remove(bullets,i)
 		end
 	end
-
-	player.fire_delay = player.fire_delay - dt
 
 	-- update the enemies
 	for i, v in ipairs(enemies) do
@@ -238,12 +296,12 @@ function love.draw()
 	-- draw player
     love.graphics.draw(ship, player.pos.x, player.pos.y)
 
-    --draw bullets
+    -- draw bullets
     for i, v in ipairs(bullets) do
-    	love.graphics.circle("line",v.pos.x,v.pos.y,10,10)
+    	love.graphics.circle("line",v.pos.x, v.pos.y, 10, 10)
     end
 
-    --draw enemies
+    -- draw enemies
     for i, v in ipairs(enemies) do
     	love.graphics.draw(enemy_ship, v.pos.x, v.pos.y)
     end
