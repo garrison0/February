@@ -14,14 +14,15 @@ ship = love.graphics.newImage("/graphics/ship.png")
 enemy_ship = love.graphics.newImage("/graphics/enemy.png")
 
 
--- Player metatable 
+-- Player metatable
 Player = {}
 Player.__index = Player
 
 function Player.new(loc, dx, dy)
 	return setmetatable({loc = loc or {0, 0}, dx = dx or 0, dy = dy or 0, 
 				shooting = false, fire_delay = 0, 
-				width = 64, height = 64}, Player)
+				width = 64, height = 64,
+				a = 0, s = 0, d = 0, w = 0}, Player)
 end
 
 -- 
