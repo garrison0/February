@@ -68,14 +68,15 @@ function AABBvsAABB(a, b)
 
 	-- SAT/Seperating Axis Theorem
 	if (x_overlap > 0) then
-
 		-- repeat for y
 		y_overlap = a.body.half_height + b.body.half_height - math.abs(n.y)
 
 		-- SAT
 		if (y_overlap > 0) then
-
 			-- Collision detected.
+			return true
+
+			--[[
 			-- Axis of least penetration:
 			if(x_overlap > y_overlap) then
 				if(n.x < 0) then
@@ -96,6 +97,7 @@ function AABBvsAABB(a, b)
 				-- fix the y overlap and/or destroy object
 
 			end
+			--]]
 		end
 	end
 end
@@ -131,6 +133,7 @@ Player = {}
 Player.__index = Player
 
 function Player:new(pos, vel)
+	self.body = AABB:new(pos, 32, 32)
 	local object = {pos = pos or {0, 0}, vel = vel or {0,0}, 
 					shooting = false, fire_delay = 0, 
 					width = 64, height = 64, bulletLevel = 1,
@@ -191,7 +194,9 @@ function Player:update(dt)
 
 	-- delay
 	self.fire_delay = self.fire_delay - dt
+
 	-- physical body
+	self.body:update(self.pos)
 end
 
 -- Enemy metatable
@@ -199,8 +204,18 @@ Enemy = {}
 Enemy.__index = Enemy
 
 function Enemy:new(pos, vel)
+	-- physical component
+	self.body = AABB:new(pos, 16, 16)
 	local object = {pos = pos or {0,0}, vel = vel or {0,0}, amplitude = 200}
 	return setmetatable(object, self)
+end
+
+function Enemy:update(dt)
+	-- image
+	self.pos.x = self.pos.x + math.sin(self.pos.y / 10) * self.amplitude * dt
+	self.pos.y = self.pos.y + self.vel.y * dt
+	-- physical component
+	self.body:update(self.pos)
 end
 
 -- Bullet metatable
@@ -208,6 +223,8 @@ Bullet = {}
 Bullet.__index = Bullet
 
 function Bullet:new(pos, vel, life, damage)
+	-- physical componenet
+	--self.body = AABB:new(pos, 5, 5)
 	local object = {pos = pos or 0, vel = vel or 0, life = life or 0, damage = damage or 0}
 	return setmetatable(object, self)
 end
@@ -219,6 +236,7 @@ function Bullet:update(dt)
 	self.pos.x = self.pos.x + (self.vel.x or 0) * dt
 
 	-- physical body
+	--self.body:update(self.pos)
 end
 
 function love.load()
@@ -261,10 +279,12 @@ function love.update(dt)
 
 	-- update the enemies
 	for i, v in ipairs(enemies) do
-		v.pos.x = v.pos.x + math.sin(v.pos.y / 10) * v.amplitude * dt
-		v.pos.y = v.pos.y + v.vel.y * dt
+		-- check for collisions with player
+		v:update(dt)
+		if AABBvsAABB(v, player) then
+			table.remove(enemies, i)
+		end
 	end
-
 end
 
 -- input
