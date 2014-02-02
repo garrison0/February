@@ -25,9 +25,19 @@ enemy_ship = love.graphics.newImage("/graphics/enemy.png")
 Game = {}
 Game.index = Game
 
-function Game.new()
-	return setmetatable({gamestate = ""}, Game)
+function Game.new(w, h)
+	love.window.setMode(w, h)
+	return setmetatable({gamestate = "", w = w, h = h}, Game)
 end
+
+function Game.resizeWindow(w, h)
+	love.window.setMode(w, h)
+end
+
+function Game.setState(state)
+	self.gamestate = state
+end
+
 
 -- Player metatable
 Player = {}
@@ -51,6 +61,10 @@ end
 
 
 function love.load()
+	-- game
+	game = Game.new(800, 700)
+
+
 	-- player
 	player = Player.new({350, 350}, 300, 250)
 
