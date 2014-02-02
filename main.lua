@@ -62,7 +62,7 @@ function love.load()
 		x_iter = 95 * i
 		enemy = Enemy:new(Vector:new(x_iter, 0), Vector:new(0, 100))
 		table.insert(enemies, enemy)
-	ends
+	end
 end
 
 function love.update(dt)
