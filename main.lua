@@ -1,11 +1,24 @@
+require "utility"
 --[[
 note -- (0,0) is top left
-
-
 --]]
 
+CollisionSphere = {}
 
+function CollisionSphere:new(h, k, r)
+	local object = {
+		h = h or 0, k = k or 0, r = r or 0
+	}
+	setmetatable(object,self)
+	self.__index = self
+	return object
+end
 
+function CollisionSphere.__add(a, b)
+	local object = {
+		h = a.h + b.h, k = a.k + b.k, r = 0
+	}
+end
 
 -- ship image
 ship = love.graphics.newImage("/graphics/ship.png")
@@ -27,6 +40,8 @@ end
 
 -- 
 function love.load()
+	Test_Vector()
+
 	-- player table
 	--[[
 	player = {a=0, s=0, d=0, w=0, space=0, height=64, width =64}
