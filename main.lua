@@ -10,15 +10,18 @@ TO DO:
 1. scrolling background
 
 2. physics collision
+	-- Partially complete
 
 3. main "game" class to script levels/check gamestate
+	-- Done but not utilized
 
 4. bullet upgrade patterns
+	-- Done
 
 5. bleeps and bloops
-
+	
+	
 --]]
-
 
 -- ship image
 ship = love.graphics.newImage("/graphics/ship.png")
@@ -48,6 +51,7 @@ end
 
 function love.load()
 	Test_Vector()
+	Physics_Tests()
 
 	-- game
 	game = Game:new(800, 700)
