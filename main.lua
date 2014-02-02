@@ -38,11 +38,10 @@ function love.load()
 
 
 	-- enemies
-	x_iter = 75
 	enemies = {}
 	for i = 1,7 do
-		x_iter = x_iter * i
-		enemy = {loc = {x_iter, 100}, dx = 0, dy = 100, amplitude = 500}
+		x_iter = 95 * i
+		enemy = {loc = {x_iter, 0}, dx = 0, dy = 100, amplitude = 200}
 		table.insert(enemies, enemy)
 	end
 end
@@ -110,7 +109,7 @@ function love.draw()
 
     --draw bullets
     for i, v in ipairs(bullets) do
-    	love.graphics.circle("fill",v.loc[1],v.loc[2],10,10)
+    	love.graphics.circle("line",v.loc[1],v.loc[2],10,10)
     end
 
     --draw enemies
