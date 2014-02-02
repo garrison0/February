@@ -38,6 +38,12 @@ end
 AABB = {}
 AABB.__index = AABB
 
+--[[
+	new():
+		pos : {}
+		width : int.
+		height : int.
+]]
 function AABB:new(pos, width, height)
 	local object = {
 		pos = Vector:new(pos[1], pos[2]),
@@ -45,6 +51,11 @@ function AABB:new(pos, width, height)
 	return setmetatable(object, AABB)
 end
 
+--[[
+	update():
+		dt : float
+		pos : Vector
+]]
 function AABB:update(dt, pos)
 	
 end
@@ -96,15 +107,15 @@ end
 function Player.shoot()
 	-- level 1
 	if (player.bulletLevel == 1) then
-		bullet = {pos={player.pos[1] + player.width/2, player.pos[2]}, vel={0,1000}, life=.35}
+		bullet = {pos=Vector:new(player.pos.x + player.width/2, player.pos.y), vel= Vector:new(0,1000), life=.35}
 		player.fire_delay = .5
 		table.insert(bullets,bullet)
 	end
 
 	-- level 2
 	if (player.bulletLevel == 2) then
-		bullet = {pos={player.pos[1] + player.width/4, player.pos[2]}, vel={0,1000}, life=.4}
-		bullet2 = {pos={player.pos[1] + 3*player.width/4, player.pos[2]}, vel={0,1000}, life=.4}
+		bullet = {pos=Vector:new(player.pos.x + player.width/4, player.pos.y), vel=Vector:new(0,1000), life=.4}
+		bullet2 = {pos=Vector:new(player.pos.x + 3*player.width/4, player.pos.y), vel=Vector:new(0,1000), life=.4}
 		player.fire_delay = .4
 		table.insert(bullets, bullet)
 		table.insert(bullets, bullet2)
@@ -112,10 +123,10 @@ function Player.shoot()
 
 	-- level 3
 	if (player.bulletLevel == 3) then
-		bullet = {pos={player.pos[1] + player.width/4, player.pos[2]}, vel={0,1000}, life=.5}
-		bullet2 = {pos={player.pos[1] + 3*player.width/4, player.pos[2]}, vel={0,1000}, life=.5}
-		bullet3 = {pos={player.pos[1] + player.width, player.pos[2]}, vel = {200,800}, life=.5}
-		bullet4 = {pos={player.pos[1], player.pos[2]}, vel = {-200, 800}, life=.5}
+		bullet = {pos=Vector:new(player.pos.x + player.width/4, player.pos.y), vel=Vector:new(0,1000), life=.5}
+		bullet2 = {pos=Vector:new(player.pos.x + 3*player.width/4, player.pos.y), vel=Vector:new(0,1000), life=.5}
+		bullet3 = {pos=Vector:new(player.pos.x + player.width, player.pos.y), vel=Vector:new(200,800), life=.5}
+		bullet4 = {pos=Vector:new(player.pos.x, player.pos.y), vel=Vector:new(-200,800), life=.5}
 		player.fire_delay = .2
 		table.insert(bullets, bullet)
 		table.insert(bullets, bullet2)
@@ -140,7 +151,7 @@ Bullet.__index = Bullet
 
 
 function Bullet.new(pos, vel, life, damage)
-	local object = {pos, vel, life, damage}
+	local object = {pos = pos or 0, vel = vel or 0, life = life or 0, damage = damage or 0}
 	return setmetatable(object, Bullet)
 end
 
@@ -153,7 +164,7 @@ function love.load()
 	game = Game.new(800, 700)
 
 	-- player
-	player = Player.new({350, 350}, {300, 250})
+	player = Player.new(Vector:new(350, 350), Vector:new(300, 250))
 	player.bulletLevel = 3
 	bullets = {}
 
@@ -161,17 +172,17 @@ function love.load()
 	enemies = {}
 	for i = 1,7 do
 		x_iter = 95 * i
-		enemy = Enemy.new({x_iter, 0}, {0, 100})
+		enemy = Enemy.new(Vector:new(x_iter, 0), Vector:new(0, 100))
 		table.insert(enemies, enemy)
 	end
 end
 
 function love.update(dt)
 	-- update the player
-	player.pos[1] = player.pos[1] - player.vel[1] * dt * player.a
-								  + player.vel[1] * dt * player.d
-	player.pos[2] = player.pos[2] + player.vel[2] * dt * player.s
-								  - player.vel[2] * dt * player.w
+	player.pos.x = player.pos.x - player.vel.x * dt * player.a
+								  + player.vel.x * dt * player.d
+	player.pos.y = player.pos.y + player.vel.y * dt * player.s
+								  - player.vel.y * dt * player.w
 
 	-- shoot bullets
 	if (player.shooting == true) and player.fire_delay <= 0 then
@@ -182,8 +193,8 @@ function love.update(dt)
 	for i, v in ipairs(bullets) do
 		v.life = v.life - dt;
 		print(v.life)
-		v.pos[2] = v.pos[2] - v.vel[2] * dt
-		v.pos[1] = v.pos[1] + (v.vel[1] or 0) * dt
+		v.pos.y = v.pos.y - v.vel.y * dt
+		v.pos.x = v.pos.x + (v.vel.x or 0) * dt
 		if v.life <= 0 then
 			table.remove(bullets,i)
 		end
@@ -193,8 +204,8 @@ function love.update(dt)
 
 	-- update the enemies
 	for i, v in ipairs(enemies) do
-		v.pos[1] = v.pos[1] + math.sin(v.pos[2] / 10) * v.amplitude * dt
-		v.pos[2] = v.pos[2] + v.vel[2] * dt
+		v.pos.x = v.pos.x + math.sin(v.pos.y / 10) * v.amplitude * dt
+		v.pos.y = v.pos.y + v.vel.y * dt
 	end
 
 end
@@ -226,15 +237,15 @@ end
 
 function love.draw()
 	-- draw player
-    love.graphics.draw(ship, player.pos[1], player.pos[2])
+    love.graphics.draw(ship, player.pos.x, player.pos.y)
 
     --draw bullets
     for i, v in ipairs(bullets) do
-    	love.graphics.circle("line",v.pos[1],v.pos[2],10,10)
+    	love.graphics.circle("line",v.pos.x,v.pos.y,10,10)
     end
 
     --draw enemies
     for i, v in ipairs(enemies) do
-    	love.graphics.draw(enemy_ship, v.pos[1], v.pos[2])
+    	love.graphics.draw(enemy_ship, v.pos.x, v.pos.y)
     end
 end
