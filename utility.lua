@@ -95,6 +95,11 @@ function Vector:angle()
 	return math.atan2(self.y,self.x)
 end
 
+function Vector:rotate(theta)
+	return Vector:new(self.x*math.cos(theta) - self.y*math.sin(theta),
+					  self.x*math.sin(theta) + self.y*math.cos(theta))
+end
+
 function Test_Vector()
 	local zero = Vector:new(0,0)
 	local one = Vector:new(1,1)
