@@ -14,25 +14,30 @@ ship = love.graphics.newImage("/graphics/ship.png")
 enemy_ship = love.graphics.newImage("/graphics/enemy.png")
 
 
+-- Player metatable 
+Player = {}
+Player.__index = Player
 
+function Player.new(loc, dx, dy)
+	return setmetatable({loc = loc or {0, 0}, dx = dx or 0, dy = dy or 0, 
+				shooting = false, fire_delay = 0, 
+				width = 64, height = 64}, Player)
+end
 
-
+-- 
 function love.load()
 	-- player table
-
+	--[[
 	player = {a=0, s=0, d=0, w=0, space=0, height=64, width =64}
-	player.loc = {350,350}
-	player.dx = 100
-	player.dy = 100
 	player.shooting = false
 
 	player = {a=0, s=0, d=0, w=0, e=0}
 	player.loc = {350,350}
 	player.dx = 300
 	player.dy = 250
-	player.width = 64
-	player.height = 64
 	player.fire_delay = 0;
+	--]]
+	player = Player.new({350, 350}, 300, 250)
 
 	bullets = {}
 
