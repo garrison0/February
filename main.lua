@@ -33,7 +33,6 @@ function CollisionSphere.__add(a, b)
 	}
 end
 
-
 -- Axis-Aligned Bounding Box
 AABB = {}
 AABB.__index = AABB
@@ -57,16 +56,12 @@ end
 		pos : Vector
 ]]
 function AABB:update(dt, pos)
-	
+	self.pos = self.pos + (pos * dt)
 end
-
-
-
 
 function AABBvsAABB()
 
 end
-
 
 -- ship image
 ship = love.graphics.newImage("/graphics/ship.png")
@@ -79,25 +74,26 @@ enemy_ship = love.graphics.newImage("/graphics/enemy.png")
 Game = {}
 Game.index = Game
 
-function Game.new(w, h)
+function Game:new(w, h)
 	love.window.setMode(w, h)
 	return setmetatable({gamestate = "", w = w, h = h}, Game)
 end
 
-function Game.resizeWindow(w, h)
+function Game:resizeWindow(w, h)
+	self.w = w
+	self.h = h
 	love.window.setMode(w, h)
 end
 
-function Game.setState(state)
+function Game:setState(state)
 	self.gamestate = state
 end
-
 
 -- Player metatable
 Player = {}
 Player.__index = Player
 
-function Player.new(pos, vel)
+function Player:new(pos, vel)
 	return setmetatable({pos = pos or {0, 0}, vel = vel or {0,0}, 
 				shooting = false, fire_delay = 0, 
 				width = 64, height = 64, bulletLevel = 1,
@@ -107,15 +103,15 @@ end
 function Player.shoot()
 	-- level 1
 	if (player.bulletLevel == 1) then
-		bullet = {pos=Vector:new(player.pos.x + player.width/2, player.pos.y), vel= Vector:new(0,1000), life=.35}
+		bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), Vector:new(0,1000), .35)
 		player.fire_delay = .5
-		table.insert(bullets,bullet)
+		table.insert(bullets, bullet)
 	end
 
 	-- level 2
 	if (player.bulletLevel == 2) then
-		bullet = {pos=Vector:new(player.pos.x + player.width/4, player.pos.y), vel=Vector:new(0,1000), life=.4}
-		bullet2 = {pos=Vector:new(player.pos.x + 3*player.width/4, player.pos.y), vel=Vector:new(0,1000), life=.4}
+		bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), Vector:new(0,1000), .4)
+		bullet2 = Bullet:new(Vector:new(player.pos.x + 3*player.width/4, player.pos.y), Vector:new(0,1000), .4)
 		player.fire_delay = .4
 		table.insert(bullets, bullet)
 		table.insert(bullets, bullet2)
@@ -123,11 +119,19 @@ function Player.shoot()
 
 	-- level 3
 	if (player.bulletLevel == 3) then
-		bullet = {pos=Vector:new(player.pos.x + player.width/4, player.pos.y), vel=Vector:new(0,1000), life=.5}
-		bullet2 = {pos=Vector:new(player.pos.x + 3*player.width/4, player.pos.y), vel=Vector:new(0,1000), life=.5}
-		bullet3 = {pos=Vector:new(player.pos.x + player.width, player.pos.y), vel=Vector:new(200,800), life=.5}
-		bullet4 = {pos=Vector:new(player.pos.x, player.pos.y), vel=Vector:new(-200,800), life=.5}
-		player.fire_delay = .2
+		bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
+									Vector:new(0,1000), .5)
+
+		bullet2 = Bullet:new(Vector:new(player.pos.x + 3*player.width/4, player.pos.y), 
+									Vector:new(0,1000), .5)
+
+		bullet3 = Bullet:new(Vector:new(player.pos.x + player.width, player.pos.y), 
+									Vector:new(200,800), .5)
+
+		bullet4 = Bullet:new(Vector:new(player.pos.x, player.pos.y), 
+									Vector:new(-200,800), .5)
+
+		player.fire_delay = .01
 		table.insert(bullets, bullet)
 		table.insert(bullets, bullet2)
 		table.insert(bullets, bullet3)
@@ -135,36 +139,31 @@ function Player.shoot()
 	end
 end
 
-
 -- Enemy metatable
 Enemy = {}
 Enemy.__index = Enemy
 
-function Enemy.new(pos, vel)
-	return setmetatable({pos = pos or {0,0}, vel = vel or {0,0}, amplitude = 200}, Enemy)
+function Enemy:new(pos, vel)
+	return setmetatable({pos = pos or {0,0}, vel = vel or {0,0}, amplitude = 200}, self)
 end
-
 
 -- Bullet metatable
 Bullet = {}
 Bullet.__index = Bullet
 
-
-function Bullet.new(pos, vel, life, damage)
+function Bullet:new(pos, vel, life, damage)
 	local object = {pos = pos or 0, vel = vel or 0, life = life or 0, damage = damage or 0}
-	return setmetatable(object, Bullet)
+	return setmetatable(object, self)
 end
-
-
 
 function love.load()
 	Test_Vector()
 
 	-- game
-	game = Game.new(800, 700)
+	game = Game:new(800, 700)
 
 	-- player
-	player = Player.new(Vector:new(350, 350), Vector:new(300, 250))
+	player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
 	player.bulletLevel = 3
 	bullets = {}
 
@@ -172,7 +171,7 @@ function love.load()
 	enemies = {}
 	for i = 1,7 do
 		x_iter = 95 * i
-		enemy = Enemy.new(Vector:new(x_iter, 0), Vector:new(0, 100))
+		enemy = Enemy:new(Vector:new(x_iter, 0), Vector:new(0, 100))
 		table.insert(enemies, enemy)
 	end
 end
