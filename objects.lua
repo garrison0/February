@@ -57,10 +57,10 @@ BoundingSphere = Object:new({class = "BoundingSphere"})
 
 BoundingTriangle = Object:new({class = "BoundingTriangle"})
 	
-	function BoundingTriangle:New(p1, p2, p3)
-		local triangle = Object:new{p1 = p1 or Vector:new(0,0),
+	function BoundingTriangle:new(p1, p2, p3)
+		local triangle = Object:new({p1 = p1 or Vector:new(0,0),
 									p2 = p2 or Vector:new(0,0),
-									p3 = p3 or Vector:new(0,0)}
+									p3 = p3 or Vector:new(0,0)})
 		setmetatable(triangle, self)
 		self.__index = self
 		return triangle
