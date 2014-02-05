@@ -10,16 +10,18 @@ TO DO:
 1. scrolling background
 
 2. physics collision
-	-- Partially complete
+	-- HEY YOU! READ THIS!
+	For some reason Circle VS. Triangle WORKS... but... 
+	it only returns true when the circle's center is within the triangle
+	i.e. the "edge" detection is broken...
+	if you want to fix, pls do, but as is it's still a better approximation than before.
 
 3. main "game" class to script levels/check gamestate
-	-- Done but not utilized
 
 4. bullet upgrade patterns
-	-- Done
+	-- ok
 
 5. bleeps and bloops
-	
 	
 --]]
 
@@ -58,13 +60,13 @@ function love.load()
 
 	-- player
 	player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
-	player.bulletLevel = 1
+	player.bulletLevel = 3
 
 	-- enemies
 	enemies = {}
 	for i = 1,7 do
 		x_iter = 95 * i
-		y_iter = 50 * i
+		y_iter = 20 * i
 		enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
 		table.insert(enemies, enemy)
 	end
@@ -135,15 +137,15 @@ end
 
 function love.draw()
 	-- draw player
-    love.graphics.draw(ship, player.pos.x, player.pos.y)
+    love.graphics.polygon("line", {player.pos.x, player.pos.y + 64, player.pos.x + 64, player.pos.y + 64, player.pos.x + 32, player.pos.y})
 
     -- draw bullets
     for i, v in ipairs(player.bullets) do
-    	love.graphics.circle("line",v.pos.x, v.pos.y, 10, 10)
+    	love.graphics.circle("line", v.pos.x, v.pos.y, 8, 10)
     end
 
     -- draw enemies
     for i, v in ipairs(enemies) do
-    	love.graphics.draw(enemy_ship, v.pos.x, v.pos.y)
+    	love.graphics.polygon("line", {v.pos.x, v.pos.y, v.pos.x + 32, v.pos.y, v.pos.x + 16, v.pos.y + 32})
     end
 end
