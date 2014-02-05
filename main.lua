@@ -58,13 +58,14 @@ function love.load()
 
 	-- player
 	player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
-	player.bulletLevel = 3
+	player.bulletLevel = 1
 
 	-- enemies
 	enemies = {}
 	for i = 1,7 do
 		x_iter = 95 * i
-		enemy = Enemy:new(Vector:new(x_iter, 0), Vector:new(0, 100))
+		y_iter = 50 * i
+		enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
 		table.insert(enemies, enemy)
 	end
 end

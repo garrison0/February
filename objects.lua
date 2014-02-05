@@ -103,7 +103,7 @@ Player = Object:new({class = "Player"})
 		-- level 1
 		if (player.bulletLevel == 1) then
 			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
-										Vector:new(0,1000), .35)
+										   Vector:new(0,50), 10)
 
 			player.fire_delay = .5
 			table.insert(player.bullets, bullet)
@@ -156,14 +156,15 @@ Enemy = Object:new({class = "Enemy"})
 	end
 
 	function Enemy:collision()
-		local v = Vector:new(self.pos.x + self.width/2, 
-							 self.pos.y + self.height/2)
-		return BoundingAggregate:new({BoundingSphere:new(v,15)})
+		local p1 = self.pos
+		local p2 = Vector:new(self.pos.x + 32, self.pos.y)
+		local p3 = Vector:new(self.pos.x + 16, self.pos.y + 16)
+		return BoundingAggregate:new({BoundingTriangle:new(p1, p2, p3)})
 	end
 
 	function Enemy:update(dt)
-		self.pos.x = self.pos.x + math.sin(self.pos.y / 10) * self.amplitude * dt
-		self.pos.y = self.pos.y + self.vel.y * dt
+		--self.pos.x = self.pos.x + math.sin(self.pos.y / 10) * self.amplitude * dt
+		--self.pos.y = self.pos.y + self.vel.y * dt
 
 	end
 

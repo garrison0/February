@@ -29,7 +29,7 @@ function detect(a, b)
 		-- check for Bounding-type
 		elseif(v.class == "BoundingTriangle") then
 
-			for j,k in ipairs(b_bodies.aggregate) do
+			for j,k in ipairs(b_bodies) do
 
 					-- check for collisions
 					if(k.class == "BoundingSphere") then
@@ -87,18 +87,48 @@ end
 -- sphere, line : BoundingSphere, {Vector, Vector} 
 function CirclevsLine(sphere, line)
 
-	-- AC = beginning of line segment to sphere center
-	-- AB = the line segment
-	local AC = sphere.center - line[1] 
-	local AB = line[2] - line[1]
+	--[[
+			By substituting the equation of the line into the eq. of the circle.
+	--]]
+	d = line[2] - line[1]
+	f = line[1] - sphere.center
 
-	-- project AC onto AB
-	AB_hat = AB * (1 / (AB:norm()))
-	AD = (AC * AB_hat) * AB_hat
+	a = d * d
+	b = 2 * f * d
+	c = f * f - (sphere.radius * sphere.radius)
 
-	dist = (AC - AD):norm()
-	return (dist <= sphere.radius)
+	discriminant = (b * b) - (4*a*c)
 
+	-- no collision
+	if discriminant < 0 then
+		return false
+	end
+
+	-- SOME collision
+	discriminant = math.sqrt(discriminant)
+
+	--[[ 
+	3 HIT cases:
+              -o->             --|-->  |            |  --|->
+     Impale(t1 hit,t2 hit), Poke(t1 hit,t2>1), ExitWound(t1<0, t2 hit), 
+
+    3 MISS cases:
+           ->  o                     o ->              | -> |
+     FallShort (t1>1,t2>1), Past (t1<0,t2<0), CompletelyInside(t1<0, t2>1)
+	--]]
+
+	t1 = (-b - discriminant) / (2*a)
+	t2 = (-b + discriminant) / (2*a)
+
+	if(t1 >= 0 and t1 <= 1) then
+		-- impale / poke
+		return true
+	end
+
+	if (t2 >= 0 and t2 <= 1) then
+		-- exit wound
+		return true
+	end
 end
 
 -- T, point_a : BoundingTriangle, Vector
@@ -161,6 +191,7 @@ function CirclevsTriangle(a_sphere, T)
 	-- Case 2
 	if(PointinTriangle(T, a_sphere.center)) then return true end
 
+
 	-- Case 3
 	if(CirclevsLine(a_sphere, {T.p1, T.p2}) or CirclevsLine(a_sphere, {T.p1, T.p3})
 											or CirclevsLine(a_sphere, {T.p2, T.p3}))
@@ -186,7 +217,6 @@ function TrianglevsTriangle(T1, T2)
 		LinevsLine(T1_line_b, T2_line_b) or LinevsLine(T1_line_b, T2_line_c))
 		then return true 
 	end
-
 	-- Points in Triangle check
 	if (PointinTriangle(T1, T2.p1) or PointinTriangle(T1, T2.p2) or
 		PointinTriangle(T1, T2.p3) or PointinTriangle(T2, T1.p1) or
