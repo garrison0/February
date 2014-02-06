@@ -22,6 +22,9 @@ TO DO:
 
 5. particle effects for enemy/player deaths
 	
+6. boss...
+
+7. main menu
 --]]
 
 -- ship image
@@ -29,7 +32,6 @@ ship = love.graphics.newImage("/graphics/ship.png")
 
 -- enemy ship image
 enemy_ship = love.graphics.newImage("/graphics/enemy.png")
-
 
 -- Game metatable
 Game = {}
@@ -65,7 +67,7 @@ function love.load()
 	enemies = {}
 	for i = 1,7 do
 		x_iter = 95 * i
-		y_iter = 20 * i
+		y_iter = -200 + 20 * i
 		enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
 		table.insert(enemies, enemy)
 	end

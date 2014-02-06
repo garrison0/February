@@ -90,7 +90,21 @@ Player = Object:new({class = "Player"})
 	end
 
 	function Player:update(dt)
-		-- image
+		-- player
+		-- keep it on screen
+		if self.pos.x + 32 >= 800 then
+			self.pos.x = self.pos.x - 1
+		end
+		if self.pos.x <= 0 then
+			self.pos.x = self.pos.x + 1
+		end
+		if self.pos.y + 32 >= 700 then
+			self.pos.y = self.pos.y - 1
+		end
+		if self.pos.y <= 0 then
+			self.pos.y = self.pos.y + 1
+		end
+
 		self.pos.x = self.pos.x - self.vel.x * dt * self.a
 									  + self.vel.x * dt * self.d
 		self.pos.y = self.pos.y + self.vel.y * dt * self.s
@@ -104,7 +118,7 @@ Player = Object:new({class = "Player"})
 		-- level 1
 		if (player.bulletLevel == 1) then
 			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
-										   Vector:new(0,1000), 10)
+										   Vector:new(0,1000), 1)
 
 			player.fire_delay = .5
 			table.insert(player.bullets, bullet)
