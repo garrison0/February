@@ -18,10 +18,9 @@ TO DO:
 
 3. main "game" class to script levels/check gamestate
 
-4. bullet upgrade patterns
-	-- ok
+4. bleeps and bloops
 
-5. bleeps and bloops
+5. particle effects for enemy/player deaths
 	
 --]]
 
@@ -137,11 +136,22 @@ end
 
 function love.draw()
 	-- draw player
-    love.graphics.polygon("line", {player.pos.x, player.pos.y + 64, player.pos.x + 64, player.pos.y + 64, player.pos.x + 32, player.pos.y})
+    love.graphics.polygon("line", {player.pos.x, player.pos.y + 32, player.pos.x + 8, player.pos.y, player.pos.x + 12, player.pos.y + 10,
+    							   player.pos.x + 14, player.pos.y + 11, player.pos.x + 16, player.pos.y + 6, player.pos.x + 18, player.pos.y + 11,
+    							   player.pos.x + 20, player.pos.y + 10, player.pos.x + 24, player.pos.y + 0, player.pos.x + 32, player.pos.y + 32,
+    							   player.pos.x + 20, player.pos.y + 18, player.pos.x + 18, player.pos.y + 18, player.pos.x + 16, player.pos.y + 24,
+    							   player.pos.x + 14, player.pos.y + 18, player.pos.x + 12, player.pos.y + 18, player.pos.x, player.pos.y + 32, player.pos.x, player.pos.y + 8})
+
+    -- drawing the hitbox
+    local p1 = Vector:new(player.pos.x + 14, player.pos.y + 11)
+	local p2 = Vector:new(player.pos.x + 18, player.pos.y + 11)
+	local p3 = Vector:new(player.pos.x + 18, player.pos.y + 18)
+	local p4 = Vector:new(player.pos.x + 14, player.pos.y + 18)
+	love.graphics.polygon("fill", {p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y})
 
     -- draw bullets
     for i, v in ipairs(player.bullets) do
-    	love.graphics.circle("line", v.pos.x, v.pos.y, 8, 10)
+    	love.graphics.circle("line", v.pos.x, v.pos.y, 4, 10)
     end
 
     -- draw enemies

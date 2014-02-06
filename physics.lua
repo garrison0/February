@@ -104,7 +104,7 @@ function CirclevsLine(sphere, line)
 		return false
 	end
 
-	-- SOME collision
+	-- SOME collision detected
 	discriminant = math.sqrt(discriminant)
 
 	--[[ 
@@ -159,7 +159,7 @@ end
 function PointinCircle(a_sphere, point_a)
 
 	local dist = (a_sphere.center - point_a):norm()
-	return (dist - a_sphere.radius) <= 0
+	return (dist) <= a_sphere.radius
 
 end
 
