@@ -73,8 +73,10 @@ Player = Object:new({class = "Player"})
 	function Player:new(pos, vel)
 		local player = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
-			shooting = false, fire_delay = 0, width = 32, height = 32,
-			bulletLevel = 1, bullets = {}, a = 0, s = 0, d = 0, w = 0
+			shooting = false, laserOn = false, fire_delay = 0, 
+			width = 32, height = 32, bulletLevel = 1, bullets = {},
+			laserOn = false,
+			a = 0, s = 0, d = 0, w = 0
 		})
 		setmetatable(player,self)
 		self.__index = self
@@ -112,6 +114,7 @@ Player = Object:new({class = "Player"})
 
 		-- delay
 		self.fire_delay = self.fire_delay - dt
+
 	end
 
 	function Player:shoot()
@@ -158,6 +161,21 @@ Player = Object:new({class = "Player"})
 		end
 	end
 
+	function Player:shootLaser(mouse_pos)
+
+		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+		ship_to_mouse = (mouse_pos - ship_middle)
+		ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
+
+		spawn_pos = ship_middle + (ship_to_mouse * 32)
+		end_pos = spawn_pos + (ship_to_mouse * 300)
+		laser = Laser:new(spawn_pos, end_pos)
+
+		player.laser = laser
+		player.laserOn = true
+
+	end
+
 Enemy = Object:new({class = "Enemy"})
 
 	function Enemy:new(pos, vel)
@@ -186,6 +204,7 @@ Enemy = Object:new({class = "Enemy"})
 Bullet = Object:new({class = "Bullet"})
 
 	function Bullet:new(pos, vel, life, damage)
+
 		local bullet = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			life = life or 0, damage = damage or 0, width = 4, height = 4
@@ -193,17 +212,74 @@ Bullet = Object:new({class = "Bullet"})
 		setmetatable(bullet,self)
 		self.__index = self
 		return bullet
+
 	end
 
 	function Bullet:collision()
+
 		local v = Vector:new(self.pos.x + self.width/2, 
 							 self.pos.y + self.height/2)
 		return BoundingAggregate:new({BoundingSphere:new(v,2)})
+
 	end
 
 	function Bullet:update(dt)
+
 		self.life = self.life - dt;
 		self.pos.y = self.pos.y - self.vel.y * dt
 		self.pos.x = self.pos.x + (self.vel.x or 0) * dt
 
-end
+	end
+
+Laser = Object:new({class = "Laser"})
+
+	function Laser:new(spawn_pos, end_pos, damage)
+
+		local laser = Object:new({
+			spawn_pos = spawn_pos or Vector:new(0, 0), 
+			end_pos = end_pos or Vector:new(0, 0),
+			life = life or 0, damage = damage or 0
+		})
+		setmetatable(laser, self)
+		self.__index = self
+		return laser
+
+	end
+
+	function Laser:collision()
+
+		-- this is a hack.
+		arbitrary_vec = Vector:new(1,1)
+		local p1 = self.spawn_pos - arbitrary_vec
+		local p2 = self.spawn_pos + arbitrary_vec
+		local p3 = self.end_pos - arbitrary_vec
+		local p4 = self.end_pos + arbitrary_vec
+		T1 = BoundingTriangle:new(p1, p2, p3)
+		T2 = BoundingTriangle:new(p4, p2, p1)
+		return BoundingAggregate:new({T1, T2})
+
+	end
+
+	function Laser:update(mouse_pos)
+
+		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+		ship_to_mouse = (mouse_pos - ship_middle)
+		ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
+		self.spawn_pos = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2) + (ship_to_mouse * 32)
+		self.end_pos = self.spawn_pos + (ship_to_mouse * 300)
+
+	end
+
+	function Laser:draw()
+
+		local p1 = self.spawn_pos
+		local p2 = self.end_pos
+		love.graphics.line(p1.x, p1.y, p2.x, p2.y)
+
+	end
+
+Bomb = Object:new({class = "Bomb"})
+
+PowerUp = Object:new({class = "PowerUp"})
+
+Shield = Object:new({class = "Shield"})

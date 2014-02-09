@@ -77,8 +77,21 @@ function love.update(dt)
 	-- update the player
 	player:update(dt)
 
+	-- update laser
+	if player.laserOn then
+		mouse_pos = Vector:new(love.mouse.getX(), love.mouse.getY())
+		player.laser:update(mouse_pos)
+
+		-- check for oollision with enemies
+		for i, v in ipairs(enemies) do
+			if detect(v, player.laser) then
+				table.remove(enemies, i)
+			end
+		end
+	end
+
 	-- shoot bullets
-	if (player.shooting == true) and player.fire_delay <= 0 then
+	if (player.shooting) and player.fire_delay <= 0 then
 		player.shoot()
 	end
 
@@ -99,7 +112,7 @@ function love.update(dt)
 			table.remove(enemies, i)
 		end
 	end
-
+	
 	for i, v in ipairs(player.bullets) do
 		for j, k in ipairs(enemies) do
 			-- check collision between bullets and enemies
@@ -127,6 +140,11 @@ function love.mousepressed(x, y, button)
 	if button == 'l' then
 		player.shooting = true
 	end
+
+	if button == 'r' then
+		mouse_pos = Vector:new(love.mouse.getX(), love.mouse.getY())
+		player:shootLaser(mouse_pos)
+	end
 end
 
 function love.mousereleased(x, y, button)
@@ -134,6 +152,9 @@ function love.mousereleased(x, y, button)
 		player.shooting = false
 	end
 
+	if button == 'r' then
+		player.laserOn = false
+	end
 end
 
 function love.draw()
@@ -154,6 +175,11 @@ function love.draw()
     -- draw bullets
     for i, v in ipairs(player.bullets) do
     	love.graphics.circle("line", v.pos.x, v.pos.y, 4, 10)
+    end
+
+    -- draw the laser 
+    if(player.laserOn) then
+    	player.laser:draw()
     end
 
     -- draw enemies
