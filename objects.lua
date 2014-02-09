@@ -169,7 +169,7 @@ Player = Object:new({class = "Player"})
 
 		spawn_pos = ship_middle + (ship_to_mouse * 32)
 		end_pos = spawn_pos + (ship_to_mouse * 300)
-		laser = Laser:new(spawn_pos, end_pos)
+		laser = Laser:new(spawn_pos, end_pos, 1)
 
 		player.laser = laser
 		player.laserOn = true
@@ -226,9 +226,12 @@ Boss = Object:new({class = "Boss"})
 		local p1 = self.pos 
 		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
 		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
-		local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		
+		local p4 = self.pos
+		local p5 = Vector:new(self.pos.x, self.pos.y + 200)
+		local p6 = Vector:new(self.pos.x + 600, self.pos.y + 200)
 		T1 = BoundingTriangle:new(p1, p2, p3)
-		T2 = BoundingTriangle:new(p4, p2, p3)
+		T2 = BoundingTriangle:new(p4, p5, p6)
 		return BoundingAggregate:new({T1, T2})
 
 	end
@@ -239,7 +242,7 @@ Boss = Object:new({class = "Boss"})
 		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
 		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
 		local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
-		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y)
+		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p4.x, p4.y, p3.x, p3.y)
 
 	end
 

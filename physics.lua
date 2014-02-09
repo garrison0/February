@@ -18,11 +18,15 @@ function detect(a, b)
 
 				-- check for collisions
 				if(k.class == "BoundingSphere") then
-					return CirclevsCircle(v, k)
+					if CirclevsCircle(v, k) then
+						return true
+					end
 				end
 
 				if(k.class == "BoundingTriangle") then
-					return CirclevsTriangle(v, k)
+					if CirclevsTriangle(v, k) then
+						return true
+					end
 				end
 			end
 
@@ -33,11 +37,15 @@ function detect(a, b)
 
 					-- check for collisions
 					if(k.class == "BoundingSphere") then
-						return CirclevsTriangle(k, v)
+						if CirclevsTriangle(k, v) then
+							return true
+						end
 					end
 
 					if(k.class == "BoundingTriangle") then
-						return TrianglevsTriangle(v, k)
+						if TrianglevsTriangle(v, k) then
+							return true
+						end
 					end
 			end
 		

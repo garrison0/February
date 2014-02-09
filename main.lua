@@ -72,7 +72,7 @@ function love.load()
 		table.insert(enemies, enemy)
 	end
 
-	for i = 1,950 do
+	for i = 1,12 do
 		x_iter = 400
 		y_iter = -1000 + i
 		enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 50))
@@ -80,7 +80,12 @@ function love.load()
 	end
 
 	-- boss
-	boss = Boss:new(Vector:new(100, 100), Vector:new(0,0), 300, 300, 500)
+	boss = Boss:new(Vector:new(100, 50), Vector:new(0,0), 600, 200, 500)
+	k = boss:collision()
+	for i, v in pairs(k) do
+		print (i, v.class)
+		for k, j in pairs(v) do print(k, j) end 
+	end
 end
 
 function love.update(dt)
@@ -101,8 +106,9 @@ function love.update(dt)
 
 		-- check for collision with boss
 		if (boss ~= nil) then
-			if detect(player.laser, boss) then
-				boss.health = boss.health - .1
+			if detect(boss, player.laser) then
+				print("collision detected")
+				boss.health = boss.health - player.laser.damage
 			end
 		end
 	end
