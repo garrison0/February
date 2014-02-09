@@ -71,6 +71,16 @@ function love.load()
 		enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
 		table.insert(enemies, enemy)
 	end
+
+	for i = 1,950 do
+		x_iter = 400
+		y_iter = -1000 + i
+		enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 50))
+		table.insert(enemies, enemy)
+	end
+
+	-- boss
+	boss = Boss:new(Vector:new(100, 100), Vector:new(0,0), 300, 300, 500)
 end
 
 function love.update(dt)
@@ -86,6 +96,13 @@ function love.update(dt)
 		for i, v in ipairs(enemies) do
 			if detect(v, player.laser) then
 				table.remove(enemies, i)
+			end
+		end
+
+		-- check for collision with boss
+		if (boss ~= nil) then
+			if detect(player.laser, boss) then
+				boss.health = boss.health - .1
 			end
 		end
 	end
@@ -104,6 +121,15 @@ function love.update(dt)
 		end
 	end
 
+	-- update boss
+	if (boss ~= nil) then 
+		boss:update(dt)
+
+		if boss.health <= 0 then
+			boss = nil
+		end
+	end
+
 	-- update the enemies
 	for i, v in ipairs(enemies) do
 		-- check for collisions with player
@@ -117,8 +143,14 @@ function love.update(dt)
 		for j, k in ipairs(enemies) do
 			-- check collision between bullets and enemies
 			if detect(v,k) then
-				table.remove(enemies,j)
-				table.remove(player.bullets,i)
+				table.remove(enemies, j)
+				table.remove(player.bullets, i)
+			end
+		end
+		if (boss ~= nil) then
+			if detect(v, boss) then
+				table.remove(player.bullets, i)
+				boss.health = boss.health - 5
 			end
 		end
 	end
@@ -185,5 +217,10 @@ function love.draw()
     -- draw enemies
     for i, v in ipairs(enemies) do
     	love.graphics.polygon("line", {v.pos.x, v.pos.y, v.pos.x + 32, v.pos.y, v.pos.x + 16, v.pos.y + 32})
+    end
+
+    -- draw boss
+    if(boss ~= nil) then
+    	boss:draw()
     end
 end

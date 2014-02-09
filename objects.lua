@@ -201,6 +201,48 @@ Enemy = Object:new({class = "Enemy"})
 
 	end
 
+Boss = Object:new({class = "Boss"})
+
+	function Boss:new(pos, vel, width, height, health)
+
+		local boss = Object:new({
+			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
+			health = health or 0, width = width or 0, height = height or 0
+		})
+		setmetatable(boss, self)
+		self.__index = self
+		return boss
+
+	end
+
+	function Boss:update(dt)
+
+		self.pos = self.pos + self.vel * dt
+
+	end
+
+	function Boss:collision()
+
+		local p1 = self.pos 
+		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+		local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		T1 = BoundingTriangle:new(p1, p2, p3)
+		T2 = BoundingTriangle:new(p4, p2, p3)
+		return BoundingAggregate:new({T1, T2})
+
+	end
+
+	function Boss:draw()
+
+		local p1 = self.pos 
+		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+		local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y)
+
+	end
+
 Bullet = Object:new({class = "Bullet"})
 
 	function Bullet:new(pos, vel, life, damage)
