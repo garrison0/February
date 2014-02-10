@@ -4,8 +4,6 @@ require "objects"
 require "physics"
 
 --[[
-note -- (0,0) is top left
-
 TO DO:
 1. scrolling background
 
@@ -14,17 +12,23 @@ TO DO:
 	For some reason Circle VS. Triangle WORKS... but... 
 	it only returns true when the circle's center is within the triangle
 	i.e. the "edge" detection is broken...
-	if you want to fix, pls do, but as is it's still a better approximation than before.
 
-3. main "shmupgame" class to script levels/check gamestate
+3. bleeps and bloops
 
-4. bleeps and bloops
-
-5. particle effects for enemy/player deaths
+4. particle effects for enemy/player deaths
 	
-6. boss...
+5. send events to the shmupgame object to handle
+		-- e.g. enemyDied(position, type)
+					-- within:
+						-- if(type == "normal") then
+								roll for item drops
+								play that animation and death sound... etc
+	basically try to stop the nonsense level-based spaghetti code that's going on.
 
-7. main menu
+6. refactor -- further divide objects into "game" and "weapons" etc.
+			-- make the shmupgame object hold the entities tables (powerups, enemies, bosses(?))
+
+7. some boss AI
 --]]
 
 -- ship image
@@ -41,7 +45,6 @@ function love.load()
 	-- shmupgame
 	shmupgame = Game:new("menu", 800, 700)
 
-	enemies = {}
 	-- load menu stuff
 
 	start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
@@ -51,24 +54,27 @@ end
 
 function love.update(dt)
 
-
+	-- main menu
 	if (shmupgame.state == "menu") then
 
-		click1 = Bullet:new(mouse_pressed_pos)
+		click = Bullet:new(mouse_pressed_pos)
 
-		if (detect(start_button, click1)) then
+		if (detect(start_button, click)) then
 			shmupgame.stateNotLoaded = true
 			shmupgame.state = "level1"
-			state_button = nil
+			start_button = nil
 		end
 
 	end
 
+	-- level 1
 	if (shmupgame.state == "level1") and (shmupgame.stateNotLoaded == true) then
 		-- player
 		player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
-		player.bulletLevel = 3
+		player.bulletLevel = 1
 
+		powerups = {}
+		enemies = {}
 		-- enemies
 		for i = 1,7 do
 			x_iter = 95 * i
@@ -78,19 +84,14 @@ function love.update(dt)
 		end
 
 		for i = 1,12 do
-			x_iter = 400
-			y_iter = -1000 + i
-			enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 50))
+			x_iter = 100 + 30*i
+			y_iter = -100 + i
+			enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 70))
 			table.insert(enemies, enemy)
 		end
 
 		-- boss
 		boss = Boss:new(Vector:new(100, 50), Vector:new(0,0), 600, 200, 2500)
-		k = boss:collision()
-		for i, v in pairs(k) do
-			print (i, v.class)
-			for k, j in pairs(v) do print(k, j) end 
-		end
 
 		shmupgame.stateNotLoaded = false
 	end
@@ -107,14 +108,20 @@ function love.update(dt)
 			-- check for oollision with enemies
 			for i, v in ipairs(enemies) do
 				if detect(v, player.laser) then
+
+					if(math.random(1, 10) == 1) then
+						powerup = PowerUp:new(v.pos, 25)
+						table.insert(powerups, powerup)
+					end
+
 					table.remove(enemies, i)
+					
 				end
 			end
 
 			-- check for collision with boss
 			if (boss ~= nil) then
 				if detect(boss, player.laser) then
-					print("collision detected")
 					boss.health = boss.health - player.laser.damage
 				end
 			end
@@ -143,6 +150,22 @@ function love.update(dt)
 			end
 		end
 
+		-- update powerups
+		for i, v in ipairs(powerups) do
+			-- update
+			v:update(dt)
+
+			-- check for player collisions.
+			if detect(v, player) then
+				table.remove(powerups, i)
+
+				-- upgrade bullet level
+				if(player.bulletLevel < 3) then
+					player.bulletLevel = player.bulletLevel + 1
+				end
+			end
+		end
+
 		-- update the enemies
 		for i, v in ipairs(enemies) do
 			-- check for collisions with player
@@ -156,6 +179,10 @@ function love.update(dt)
 			for j, k in ipairs(enemies) do
 				-- check collision between bullets and enemies
 				if detect(v,k) then
+					if(math.random(1, 10) == 1) then
+						powerup = PowerUp:new(k.pos, 25)
+						table.insert(powerups, powerup)
+					end
 					table.remove(enemies, j)
 					table.remove(player.bullets, i)
 				end
@@ -254,6 +281,11 @@ function love.draw()
 	    -- draw enemies
 	    for i, v in ipairs(enemies) do
 	    	love.graphics.polygon("line", {v.pos.x, v.pos.y, v.pos.x + 32, v.pos.y, v.pos.x + 16, v.pos.y + 32})
+	    end
+
+	    -- draw powerups
+	    for i, v in ipairs(powerups) do
+	    	v:draw()
 	    end
 
 	    -- draw boss

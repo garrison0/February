@@ -193,18 +193,19 @@ Player = Object:new({class = "Player"})
 			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
 										   Vector:new(0,1000), 1, 1)
 
-			player.fire_delay = .5
+			player.fire_delay = .3
 			table.insert(player.bullets, bullet)
 		end
 
 		-- level 2
 		if (player.bulletLevel == 2) then
-			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y),
-										Vector:new(0,1000), 1, 1)
-			bullet2 = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
+			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
 										Vector:new(0,1000), 1, 1)
 
-			player.fire_delay = .4
+			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
+										Vector:new(0,1000), 1, 1)
+
+			player.fire_delay = .2
 			table.insert(player.bullets, bullet)
 			table.insert(player.bullets, bullet2)
 		end
@@ -393,8 +394,52 @@ Laser = Object:new({class = "Laser"})
 
 	end
 
-Bomb = Object:new({class = "Bomb"})
-
 PowerUp = Object:new({class = "PowerUp"})
+
+	function PowerUp:new(pos, lifetime)
+
+		powerup = Object:new({pos = pos or Vector:new(0,0),
+							  vel = Vector:new(0, 75),
+							  lifetime = lifetime or 0,
+							  width = 25, height = 25})
+		setmetatable(powerup, self)
+		self.__index = self
+		return powerup
+
+	end
+
+	function PowerUp:collision()
+
+		local p1 = self.pos 
+		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+		
+		local p4 = self.pos
+		local p5 = Vector:new(self.pos.x, self.pos.y + self.height)
+		local p6 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		T1 = BoundingTriangle:new(p1, p2, p3)
+		T2 = BoundingTriangle:new(p4, p5, p6)
+		return BoundingAggregate:new({T1, T2})
+
+	end
+
+	function PowerUp:draw()
+
+		local p1 = self.pos 
+		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+		local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p4.x, p4.y, p3.x, p3.y)
+
+	end
+
+	function PowerUp:update(dt)
+
+		self.pos = self.pos + self.vel * dt
+		self.lifetime = self.lifetime - dt
+
+	end
+
+Bomb = Object:new({class = "Bomb"})
 
 Shield = Object:new({class = "Shield"})
