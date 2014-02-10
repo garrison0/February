@@ -68,6 +68,76 @@ BoundingTriangle = Object:new({class = "BoundingTriangle"})
 
 	-- TO DO: translation functions
 
+Game = Object:new({class = "Game"})
+
+	function Game:new(initial_state, w, h)
+
+		love.window.setMode(w, h)
+		local game = {w = w, h = h, stateNotLoaded = true}
+		game.state = initial_state or "level1"
+		setmetatable(game, self)
+		self.__index = self
+		return game
+
+	end
+
+	function Game:resizeWindow(w, h)
+
+		self.w = w
+		self.h = h
+		love.window.setMode(w, h)
+
+	end
+
+	function Game:setState(state)
+
+		self.gamestate = state
+
+	end
+
+	function Game:update()
+
+
+	end
+
+MenuButton = Object:new({class = "MenuButton"})
+
+	function MenuButton:new(text, pos, width, height)
+
+		local button = Object:new({text = text or "", pos = pos or Vector:new(0,0),
+								   width = width or 0, height = height or 0})
+		setmetatable(button, self)
+		self.__index = self
+		return button
+
+	end
+
+	function MenuButton:draw()
+
+		-- the box
+		p1 = self.pos
+		p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+		p3 = Vector:new(self.pos.x, self.pos.y + self.height) 
+		p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		love.graphics.polygon("line", p1.x, p1.y, p3.x, p3.y, p4.x, p4.y, p2.x, p2.y)
+
+		-- the text
+		love.graphics.print(self.text, self.pos.x + 50, self.pos.y + 50)
+
+	end
+
+	function MenuButton:collision()
+
+		p1 = self.pos
+		p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+		p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+		p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		T1 = BoundingTriangle:new(p1, p2, p4)
+		T2 = BoundingTriangle:new(p1, p3, p4)
+		return BoundingAggregate:new({T1, T2})
+
+	end
+
 Player = Object:new({class = "Player"})
 
 	function Player:new(pos, vel)
@@ -121,7 +191,7 @@ Player = Object:new({class = "Player"})
 		-- level 1
 		if (player.bulletLevel == 1) then
 			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
-										   Vector:new(0,1000), 1)
+										   Vector:new(0,1000), 1, 1)
 
 			player.fire_delay = .5
 			table.insert(player.bullets, bullet)
@@ -130,9 +200,9 @@ Player = Object:new({class = "Player"})
 		-- level 2
 		if (player.bulletLevel == 2) then
 			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y),
-										Vector:new(0,1000), .4)
+										Vector:new(0,1000), 1, 1)
 			bullet2 = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
-										Vector:new(0,1000), .4)
+										Vector:new(0,1000), 1, 1)
 
 			player.fire_delay = .4
 			table.insert(player.bullets, bullet)
@@ -142,16 +212,16 @@ Player = Object:new({class = "Player"})
 		-- level 3
 		if (player.bulletLevel == 3) then
 			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1)
+										Vector:new(0,1000), 1, 1)
 
 			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1)
+										Vector:new(0,1000), 1, 1)
 
 			bullet3 = Bullet:new(Vector:new(player.pos.x + player.width, player.pos.y), 
-										Vector:new(200,800), 1)
+										Vector:new(200,800), 1, 1)
 
 			bullet4 = Bullet:new(Vector:new(player.pos.x, player.pos.y), 
-										Vector:new(-200,800), 1)
+										Vector:new(-200,800), 1, 1)
 
 			player.fire_delay = .1
 			table.insert(player.bullets, bullet)
