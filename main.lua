@@ -29,13 +29,21 @@ TO DO:
 			-- make the shmupgame object hold the entities tables (powerups, enemies, bosses(?))
 
 7. some boss AI
+
+8. have the laser follow the mouse (post-spawning) with a rotational velocity instead of this awkward 1 to 1
+			-- also need a laser energy to make it less ridiculous
+
+9. a "turret" enemy -- one that stops and shoots at the player's position,
+					flying away (effectively dying but no score) after t time passes
+
+10. a "charger" enemy -- a bigger one that gradually moves down and shoots a set pattern
+						 -- basically a meat shield, perhaps it can have a ground tank variation that scoots around
+
+11. a small, homing enemy -- like the scourge
+
+12. UI
+
 --]]
-
--- ship image
-ship = love.graphics.newImage("/graphics/ship.png")
-
--- enemy ship image
-enemy_ship = love.graphics.newImage("/graphics/enemy.png")
 
 function love.load()
 
@@ -48,7 +56,6 @@ function love.load()
 	-- load menu stuff
 
 	start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
-	mouse_pressed = false
 
 end
 
