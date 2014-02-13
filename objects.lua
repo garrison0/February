@@ -239,7 +239,7 @@ Player = Object:new({class = "Player"})
 		ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
 
 		spawn_pos = ship_middle + (ship_to_mouse * 32)
-		end_pos = spawn_pos + (ship_to_mouse * 300)
+		end_pos = spawn_pos + (ship_to_mouse * 250)
 		laser = Laser:new(spawn_pos, end_pos, 1)
 
 		player.laser = laser
@@ -393,10 +393,6 @@ Laser = Object:new({class = "Laser"})
 
 	function Laser:update(mouse_pos)
 
-		--self.spawn_pos = self.spawn_pos + player.vel
-		--self.end_pos = self.end_pos + player.vel
-
-
 		-- calculate new vector based on mouse position
 		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
 		ship_to_mouse = (mouse_pos - ship_middle)
@@ -421,11 +417,9 @@ Laser = Object:new({class = "Laser"})
 
 			spawn_pos = self.spawn_pos - ship_middle
 			spawn_pos = spawn_pos:rotate(self.rot_vel)
-			self.spawn_pos = spawn_pos + ship_middle
-
-			end_pos = self.end_pos - ship_middle
-			end_pos = end_pos:rotate(self.rot_vel)
-			self.end_pos = end_pos + ship_middle
+			spawn_pos = spawn_pos * (1 / spawn_pos:norm())
+			self.spawn_pos = ship_middle + (spawn_pos * 32)
+			self.end_pos = ship_middle + (spawn_pos * 250)
 
 		end
 
@@ -435,11 +429,9 @@ Laser = Object:new({class = "Laser"})
 			
 			spawn_pos = self.spawn_pos - ship_middle
 			spawn_pos = spawn_pos:rotate(-1 * self.rot_vel)
-			self.spawn_pos = spawn_pos + ship_middle
-
-			end_pos = self.end_pos - ship_middle
-			end_pos = end_pos:rotate(-1 * self.rot_vel)
-			self.end_pos = end_pos + ship_middle
+			spawn_pos = spawn_pos * (1 / spawn_pos:norm())
+			self.spawn_pos = ship_middle + (spawn_pos * 32)
+			self.end_pos = ship_middle + (spawn_pos * 250)
 
 		end
 
