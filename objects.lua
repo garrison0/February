@@ -239,8 +239,8 @@ Player = Object:new({class = "Player"})
 		ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
 
 		spawn_pos = ship_middle + (ship_to_mouse * 32)
-		end_pos = spawn_pos + (ship_to_mouse * 250)
-		laser = Laser:new(spawn_pos, end_pos, 1)
+		end_pos = spawn_pos + (ship_to_mouse * 225)
+		laser = Laser:new(spawn_pos, end_pos, 1, 5)
 
 		player.laser = laser
 		player.laserOn = true
@@ -349,27 +349,21 @@ Bullet = Object:new({class = "Bullet"})
 
 Laser = Object:new({class = "Laser"})
 
-	function Laser:new(spawn_pos, end_pos, damage)
+	function Laser:new(spawn_pos, end_pos, damage, lifetime)
 
 		local laser = Object:new({
 			spawn_pos = spawn_pos or Vector:new(0, 0), 
 			end_pos = end_pos or Vector:new(0, 0),
-			life = life or 0, damage = damage or 0,
+			lifetime = lifetime or 0, damage = damage or 0,
 			angle = 0, goal_angle = 0, rot_vel = math.pi / 1200
 		})
 
 		-- find angle from x axis
 		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
 
-		vec_A = Vector:new(1, 0)
-		vec_B = spawn_pos - ship_middle
-		a_dot_b = vec_A * vec_B 
-		cos_theta = a_dot_b / (vec_A:norm() * vec_B:norm())
-		laser.angle = math.acos(cos_theta)
-
-		if (mouse_pos.y < ship_middle.y) then
-			laser.angle = laser.angle * -1
-		end
+		vec_A = end_pos - ship_middle
+		
+		laser.angle = math.atan2(vec_A.y, vec_A.x)
 
 		setmetatable(laser, self)
 		self.__index = self
@@ -391,24 +385,15 @@ Laser = Object:new({class = "Laser"})
 
 	end
 
-	function Laser:update(mouse_pos)
+	function Laser:update(dt, mouse_pos)
 
 		-- calculate new vector based on mouse position
 		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
 		ship_to_mouse = (mouse_pos - ship_middle)
 
-		-- localize both vectors to be centered at (0,0)
 		vec_A = ship_to_mouse
-		vec_B = Vector:new(1, 0)
 
-		-- calculate the angle between this new vector and the current laser position
-		a_dot_b = vec_A * vec_B 
-		cos_theta = a_dot_b / (vec_A:norm() * vec_B:norm())
-		self.goal_angle = math.acos(cos_theta)
-
-		if (mouse_pos.y < ship_middle.y) then
-			self.goal_angle = self.goal_angle * -1
-		end
+		self.goal_angle = math.atan2(vec_A.y, vec_A.x)
 		
 		-- rotate in that direction until the mouse is released and the laser is thrown out
 		if self.goal_angle > (self.angle + self.rot_vel )then
@@ -419,7 +404,7 @@ Laser = Object:new({class = "Laser"})
 			spawn_pos = spawn_pos:rotate(self.rot_vel)
 			spawn_pos = spawn_pos * (1 / spawn_pos:norm())
 			self.spawn_pos = ship_middle + (spawn_pos * 32)
-			self.end_pos = ship_middle + (spawn_pos * 250)
+			self.end_pos = ship_middle + (spawn_pos * 258)
 
 		end
 
@@ -431,11 +416,16 @@ Laser = Object:new({class = "Laser"})
 			spawn_pos = spawn_pos:rotate(-1 * self.rot_vel)
 			spawn_pos = spawn_pos * (1 / spawn_pos:norm())
 			self.spawn_pos = ship_middle + (spawn_pos * 32)
-			self.end_pos = ship_middle + (spawn_pos * 250)
+			self.end_pos = ship_middle + (spawn_pos * 258)
 
 		end
 
-		print("goal: " .. self.goal_angle .. "  self.angle: " .. self.angle)
+		-- print("goal: " .. self.goal_angle .. "  self.angle: " .. self.angle)
+		-- update life
+		self.lifetime = self.lifetime - dt
+		if self.lifetime < 0 then
+			player.laserOn = false
+		end
 
 	end
 

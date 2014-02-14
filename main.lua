@@ -110,7 +110,11 @@ function love.update(dt)
 		-- update laser
 		if player.laserOn then
 			mouse_pos = Vector:new(love.mouse.getX(), love.mouse.getY())
-			player.laser:update(mouse_pos)
+			player.laser:update(dt, mouse_pos)
+
+			-- because i don't know fuck you i don't feel like fixing that bug
+			-- it's now a design decision!
+			player.vel = Vector:new(0, 0)
 
 			-- check for oollision with enemies
 			for i, v in ipairs(enemies) do
@@ -132,6 +136,10 @@ function love.update(dt)
 					boss.health = boss.health - player.laser.damage
 				end
 			end
+		else 
+
+			player.vel = Vector:new(300, 250)
+
 		end
 
 		-- shoot bullets
