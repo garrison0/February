@@ -51,11 +51,17 @@ function love.load()
 	Physics_Tests()
 
 	-- shmupgame
-	shmupgame = Game:new("menu", 800, 700)
+	shmupgame = Game:new("menu", 800, 700, false)
 
 	-- load menu stuff
 
 	start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
+
+	-- lol hi, flags.
+	wave1_On = false
+	wave2_On = false
+	wave3_On = false
+	boss_dead = false
 
 end
 
@@ -69,6 +75,7 @@ function love.update(dt)
 		if (detect(start_button, click)) then
 			shmupgame.stateNotLoaded = true
 			shmupgame.state = "level1"
+			wave1_On = true
 			start_button = nil
 		end
 
@@ -82,6 +89,7 @@ function love.update(dt)
 
 		powerups = {}
 		enemies = {}
+
 		-- enemies
 		for i = 1,7 do
 			x_iter = 95 * i
@@ -90,20 +98,98 @@ function love.update(dt)
 			table.insert(enemies, enemy)
 		end
 
-		for i = 1,12 do
-			x_iter = 100 + 30*i
-			y_iter = -100 + i
-			enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 70))
-			table.insert(enemies, enemy)
-		end
-
-		-- boss
-		boss = Boss:new(Vector:new(100, 50), Vector:new(0,0), 600, 200, 2500)
-
 		shmupgame.stateNotLoaded = false
 	end
 
 	if shmupgame.state == "level1" then
+
+		-- the 'loading' part; don't want to load twice.
+		if wave1_On == true and shmupgame.stateNotLoaded == true then
+
+			-- spawn enemies
+			for i = 1,7 do
+				x_iter = 95 * i
+				y_iter = -200 + 20 * i
+				enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
+				table.insert(enemies, enemy)
+			end
+			shmupgame.stateNotLoaded = false
+
+		end
+
+		-- the check whether to move on or not. 
+		if wave1_On == true and shmupgame.stateNotLoaded == false then
+
+			if enemies[1] == nil then
+
+				wave1_On = false
+				wave2_On = true
+				shmupgame.stateNotLoaded = true
+
+			end
+
+		end
+
+		-- loading part
+		if wave2_On == true and shmupgame.stateNotLoaded == true then
+
+			-- spawn enemies
+			for i = 1,7 do
+				x_iter = 95 * i
+				y_iter = -200 + 20 * i
+				enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
+				table.insert(enemies, enemy)
+			end
+			shmupgame.stateNotLoaded = false
+
+		end
+
+
+		-- the check whether to move on or not. 
+		if wave2_On == true and shmupgame.stateNotLoaded == false then
+
+			if enemies[1] == nil then
+
+				wave2_On = false
+				wave3_On = true
+				shmupgame.stateNotLoaded = true
+
+			end
+
+		end
+
+		-- loading part
+		if wave3_On == true and shmupgame.stateNotLoaded == true then
+
+			-- spawn boss
+			boss = Boss:new(Vector:new(100, 50), Vector:new(0,0), 600, 200, 2500)
+
+			shmupgame.stateNotLoaded = false
+
+		end
+
+
+		-- the check whether to move on or not. 
+		if wave3_On == true and shmupgame.stateNotLoaded == false then
+
+			if boss == nil then
+
+				wave3_On = false
+				boss_dead = true
+				shmupgame.stateNotLoaded = true
+
+			end
+
+		end
+
+		if boss_dead == true and shmupgame.stateNotLoaded == true then
+
+			-- CONGRATS screen + button to go back to main menu
+			start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
+			shmupgame.state = "menu"
+
+		end
+
 		-- update the player
 		player:update(dt)
 

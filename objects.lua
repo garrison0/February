@@ -70,10 +70,11 @@ BoundingTriangle = Object:new({class = "BoundingTriangle"})
 
 Game = Object:new({class = "Game"})
 
-	function Game:new(initial_state, w, h)
+	function Game:new(initial_state, w, h, fullscreen)
 
-		love.window.setMode(w, h)
-		local game = {w = w, h = h, stateNotLoaded = true}
+		love.window.setMode(w, h, {fullscreen = fullscreen or false})
+		local game = {w = w, h = h, stateNotLoaded = true, 
+									fullscreen = fullscreen or false}
 		game.state = initial_state or "level1"
 		setmetatable(game, self)
 		self.__index = self
