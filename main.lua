@@ -282,9 +282,18 @@ function love.update(dt)
 		if (boss ~= nil) then 
 			boss:update(dt)
 
+			-- collide between boss and player
+			if(detect(boss, player)) then
+				-- lol back to the menu. temporary.
+				mouse_pressed_pos = Vector:new(0, 0)
+				start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
+				shmupgame.state = "menu"
+			end
+
 			if boss.health <= 0 then
 				boss = nil
 			end
+
 		end
 
 		-- update powerups
@@ -414,11 +423,11 @@ function love.draw()
 	    							   player.pos.x + 14, player.pos.y + 18, player.pos.x + 12, player.pos.y + 18, player.pos.x, player.pos.y + 32, player.pos.x, player.pos.y + 8})
 
 	    -- drawing the hitbox
-	    local p1 = Vector:new(player.pos.x + 14, player.pos.y + 11)
-		local p2 = Vector:new(player.pos.x + 18, player.pos.y + 11)
-		local p3 = Vector:new(player.pos.x + 18, player.pos.y + 18)
-		local p4 = Vector:new(player.pos.x + 14, player.pos.y + 18)
-		love.graphics.polygon("fill", {p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y})
+	 	-- local p1 = Vector:new(player.pos.x + 14, player.pos.y + 11)
+		-- local p2 = Vector:new(player.pos.x + 18, player.pos.y + 11)
+		-- local p3 = Vector:new(player.pos.x + 18, player.pos.y + 18)
+		-- local p4 = Vector:new(player.pos.x + 14, player.pos.y + 18)
+		-- love.graphics.polygon("fill", {p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y})
 
 	    -- draw bullets
 	    for i, v in ipairs(player.bullets) do

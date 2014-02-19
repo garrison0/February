@@ -464,7 +464,8 @@ Boss = Object:new({class = "Boss"})
 
 		local boss = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
-			health = health or 0, width = width or 0, height = height or 0
+			health = health or 0, width = width or 0, height = height or 0,
+			fireDelay = fireDelay or .5
 		})
 		setmetatable(boss, self)
 		self.__index = self
@@ -474,32 +475,82 @@ Boss = Object:new({class = "Boss"})
 
 	function Boss:update(dt)
 
+		self.fireDelay = self.fireDelay - dt
+
 		self.pos = self.pos + self.vel * dt
 
+		-- gun points
+		local p7 = Vector:new(self.pos.x + 3 * self.width / 4, self.pos.y + self.height + 25)
+		local p8 = Vector:new(self.pos.x + self.width / 4, self.pos.y + self.height + 25)
+		points = {p7, p8}
+
+		if self.fireDelay <= 0 then
+
+			for i = 1, 2 do
+
+				player_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+				gun_to_player = (player_middle - points[i])
+				gun_to_player = (gun_to_player * (1 / gun_to_player:norm()))
+
+				velocity = gun_to_player * 300
+				velocity.y = -1 * velocity.y
+
+				bullet = Bullet:new(points[i], velocity, 10, 10)
+				table.insert(shmupgame.enemyBullets, bullet)
+
+				self.fireDelay = .2
+
+			end
+		end
 	end
 
 	function Boss:collision()
 
-		local p1 = self.pos 
-		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
-		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+		-- shape of a long hexagon
+		local p1 = Vector:new(self.pos.x, self.pos.y + self.height / 2)
+		local p2 = Vector:new(self.pos.x + self.width / 8, self.pos.y)
+		local p3 = Vector:new(self.pos.x + self.width / 8, self.pos.y + self.height)
 		
-		local p4 = self.pos
-		local p5 = Vector:new(self.pos.x, self.pos.y + 200)
-		local p6 = Vector:new(self.pos.x + 600, self.pos.y + 200)
+		local p4 = Vector:new(self.pos.x + 7 * self.width / 8, self.pos.y)
+		local p5 = Vector:new(self.pos.x + self.width, self.pos.y + self.height / 2)
+		local p6 = Vector:new(self.pos.x + 7 * self.width / 8, self.pos.y + self.height)
+
+		-- additional gun points
+		local p7 = Vector:new(self.pos.x + 3 * self.width / 4, self.pos.y + self.height)
+		local p8 = Vector:new(self.pos.x + self.width / 4, self.pos.y + self.height)
+
 		T1 = BoundingTriangle:new(p1, p2, p3)
 		T2 = BoundingTriangle:new(p4, p5, p6)
-		return BoundingAggregate:new({T1, T2})
+		T3 = BoundingTriangle:new(p2, p4, p3)
+		T4 = BoundingTriangle:new(p3, p6, p4)
+		T5 = BoundingTriangle:new(Vector:new(p7.x + 10, p7.y), Vector:new(p7.x, p7.y + 25),
+								  Vector:new(p7.x - 10, p7.y))
+		T6 = BoundingTriangle:new(Vector:new(p8.x + 10, p8.y), Vector:new(p8.x, p8.y + 25),
+								  Vector:new(p8.x - 10, p8.y))
+
+		return BoundingAggregate:new({T1, T2, T3, T4, T5, T6})
 
 	end
 
 	function Boss:draw()
 
-		local p1 = self.pos 
-		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
-		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
-		local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
-		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p4.x, p4.y, p3.x, p3.y)
+		-- main shape
+		local p1 = Vector:new(self.pos.x, self.pos.y + self.height / 2)
+		local p2 = Vector:new(self.pos.x + self.width / 8, self.pos.y)
+		local p3 = Vector:new(self.pos.x + self.width / 8, self.pos.y + self.height)
+		
+		local p4 = Vector:new(self.pos.x + 7 * self.width / 8, self.pos.y)
+		local p5 = Vector:new(self.pos.x + self.width, self.pos.y + self.height / 2)
+		local p6 = Vector:new(self.pos.x + 7 * self.width / 8, self.pos.y + self.height)
+
+		-- additional gun points
+		local p7 = Vector:new(self.pos.x + 3 * self.width / 4, self.pos.y + self.height)
+		local p8 = Vector:new(self.pos.x + self.width / 4, self.pos.y + self.height)
+
+		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p4.x, p4.y, p5.x, p5.y, p6.x, p6.y, 
+									  p7.x + 10, p7.y, p7.x, p7.y + 25, p7.x - 10, p7.y, 
+									  p8.x + 10, p8.y, p8.x, p8.y + 25, p8.x - 10, p8.y,
+									  p3.x, p3.y)
 
 	end
 
