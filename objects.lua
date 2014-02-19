@@ -165,17 +165,17 @@ Player = Object:new({class = "Player"})
 	function Player:update(dt)
 		-- player
 		-- keep it on screen
-		if self.pos.x + 32 >= 800 then
-			self.pos.x = self.pos.x - 1
+		if self.pos.x + self.width >= shmupgame.width then
+			self.pos.x = shmupgame.width - self.width
 		end
 		if self.pos.x <= 0 then
-			self.pos.x = self.pos.x + 1
+			self.pos.x = 0
 		end
-		if self.pos.y + 32 >= 700 then
-			self.pos.y = self.pos.y - 1
+		if self.pos.y + self.height >= shmupgame.height then
+			self.pos.y = shmupgame.height - self.height
 		end
 		if self.pos.y <= 0 then
-			self.pos.y = self.pos.y + 1
+			self.pos.y = 0
 		end
 
 		self.pos.x = self.pos.x - self.vel.x * dt * self.a
@@ -353,6 +353,108 @@ Enemy = Object:new({class = "Enemy"})
 
 			end
 		end
+	end
+
+	function Enemy:draw()
+
+		love.graphics.polygon("line", {self.pos.x, self.pos.y, self.pos.x + 32, self.pos.y, self.pos.x + 16, self.pos.y + 32})
+
+	end
+
+Turret = Object:new({class = "Turret"})
+
+	function Turret:new(pos, targetPos, velScalar, fireDelay, bulletLevel, health, width, height)
+		turret = Object:new({pos = pos, targetPos = targetPos or Vector:new(0,0),
+				  velScalar = velScalar or 50,
+				  fireDelay = fireDelay or 1, width = width or 32, height = height or 32,
+				  bulletLevel = bulletLevel or 1, health = health or 500, life = life or 20})
+		self.__index = self
+		setmetatable(turret, self)
+		return turret
+	end
+
+	function Turret:update(dt)
+
+		-- update the position
+		if self.targetPos - self.pos ~= Vector:new(0, 0) then
+
+			-- find velocity direction, multiply by velocity scalar.
+			direction = (self.targetPos - self.pos)
+			direction = direction * (1 / direction:norm())
+			velocity = direction * self.velScalar
+
+			self.pos = self.pos + velocity * dt
+
+		end
+
+		self.fireDelay = self.fireDelay - dt
+
+		if self.fireDelay <= 0 then
+
+			-- fire at the player depending upon bulletLevel
+			player_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+			turret_middle = Vector:new(self.pos.x + self.width / 2, self.pos.y + self.height / 2)
+			turret_to_player = (player_middle - turret_middle)
+			turret_to_player = (turret_to_player * (1/turret_to_player:norm()))
+
+			velocity = turret_to_player * 200
+			velocity.y = velocity.y * -1
+
+			if self.bulletLevel == 1 then
+
+				bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10)
+				table.insert(shmupgame.enemyBullets, bullet)
+
+			end
+
+			if self.bulletLevel == 9 then
+
+				velocity = velocity:rotate(-math.pi / 2)
+
+				for i = 1, 6 do
+
+					velocity = velocity:rotate(math.pi / 6)
+					bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10)
+					table.insert(shmupgame.enemyBullets, bullet)
+
+				end
+			end
+
+			-- refresh fireDelay
+			self.fireDelay = .5
+
+		end
+
+	end
+
+	function Turret:collision()
+
+		p1 = self.pos
+		p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+		p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+		p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		return BoundingAggregate:new({BoundingTriangle:new(p1, p2, p3), BoundingTriangle:new(p2, p3, p4)})
+
+	end
+
+	function Turret:draw()
+
+		-- draw the box
+		p1 = self.pos
+		p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+		p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+		p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p4.x, p4.y, p3.x, p3.y)
+
+		-- draw the gun
+		player_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+		turret_middle = Vector:new(self.pos.x + self.width / 2, self.pos.y + self.height / 2)
+		turret_to_player = (player_middle - turret_middle)
+		turret_to_player = (turret_to_player * (1/turret_to_player:norm()))
+
+		endpos = turret_middle + (turret_to_player * 50)
+		love.graphics.line(turret_middle.x, turret_middle.y, endpos.x, endpos.y)
+
 	end
 
 Boss = Object:new({class = "Boss"})

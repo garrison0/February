@@ -81,6 +81,7 @@ function love.update(dt)
 
 		powerups = {}
 		enemies = {}
+		shmupgame.enemyBullets = {}
 
 	end
 
@@ -96,6 +97,11 @@ function love.update(dt)
 				enemy.life = 5
 				table.insert(enemies, enemy)
 			end
+
+			-- spawn a turret
+			turret = Turret:new(Vector:new(300, 100), Vector:new(650, 100), 25, .5, 9, 200, 32, 32)
+			table.insert(enemies, turret)
+
 			shmupgame.stateNotLoaded = false
 
 		end
@@ -246,7 +252,28 @@ function love.update(dt)
 			v:update(dt)
 
 			if v.life <= 0 then
-				table.remove(player.bullets,i)
+				table.remove(player.bullets, i)
+			end
+		end
+
+		-- update enemy bullets
+		for i, v in ipairs(shmupgame.enemyBullets) do
+
+			v:update(dt)
+
+			if v.life <= 0 then
+				table.remove(shmupgame.enemyBullets, i)
+			end
+
+			-- check for collision with player
+			if detect(player, v) then
+
+				table.remove(shmupgame.enemyBullets, i)
+				-- lol back to the menu. temporary.
+				mouse_pressed_pos = Vector:new(0, 0)
+				start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
+				shmupgame.state = "menu"
+
 			end
 		end
 
@@ -394,6 +421,11 @@ function love.draw()
 	    	love.graphics.circle("line", v.pos.x, v.pos.y, 4, 10)
 	    end
 
+	    -- draw enemy bullets
+	    for i, v in ipairs(shmupgame.enemyBullets) do
+	    	love.graphics.circle("fill", v.pos.x, v.pos.y, 4, 10)
+	    end
+
 	    -- draw the laser 
 	    if(player.laserOn) then
 	    	player.laser:draw()
@@ -401,7 +433,7 @@ function love.draw()
 
 	    -- draw enemies
 	    for i, v in ipairs(enemies) do
-	    	love.graphics.polygon("line", {v.pos.x, v.pos.y, v.pos.x + 32, v.pos.y, v.pos.x + 16, v.pos.y + 32})
+	    	v:draw()
 	    end
 
 	    -- draw powerups
