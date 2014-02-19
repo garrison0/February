@@ -7,12 +7,6 @@ require "physics"
 TO DO:
 1. scrolling background
 
-2. physics collision
-	-- HEY YOU! READ THIS!
-	For some reason Circle VS. Triangle WORKS... but... 
-	it only returns true when the circle's center is within the triangle
-	i.e. the "edge" detection is broken...
-
 3. bleeps and bloops
 
 4. particle effects for enemy/player deaths
@@ -29,9 +23,6 @@ TO DO:
 			-- make the shmupgame object hold the entities tables (powerups, enemies, bosses(?))
 
 7. some boss AI
-
-8. have the laser follow the mouse (post-spawning) with a rotational velocity instead of this awkward 1 to 1
-			-- also need a laser energy to make it less ridiculous
 
 9. a "turret" enemy -- one that stops and shoots at the player's position,
 					flying away (effectively dying but no score) after t time passes

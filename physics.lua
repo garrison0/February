@@ -186,24 +186,16 @@ end
 function CirclevsTriangle(a_sphere, T)
 
 	--[[
-	Three cases:
-		1. any vertex in circle
-		2. circle within triangle
-		3. circle intersects any of the edges
+	Two cases
+		1. circle within triangle
+		2. circle intersects any of the edges
 	]]
 	-- Case 1
-	if(PointinCircle(a_sphere, T.p1) or PointinCircle(a_sphere, T.p2)
-									 or PointinCircle(a_sphere, T.p3))
-									 then return true end
-
-	-- Case 2
-	if(PointinTriangle(T, a_sphere.center)) then return true end
-
-
-	-- Case 3
 	if(CirclevsLine(a_sphere, {T.p1, T.p2}) or CirclevsLine(a_sphere, {T.p1, T.p3})
 											or CirclevsLine(a_sphere, {T.p2, T.p3}))
 											then return true end 
+	-- Case 2
+	if(PointinTriangle(T, a_sphere.center)) then return true end
 
 end
 
@@ -225,6 +217,7 @@ function TrianglevsTriangle(T1, T2)
 		LinevsLine(T1_line_b, T2_line_b) or LinevsLine(T1_line_b, T2_line_c))
 		then return true 
 	end
+	
 	-- Points in Triangle check
 	if (PointinTriangle(T1, T2.p1) or PointinTriangle(T1, T2.p2) or
 		PointinTriangle(T1, T2.p3) or PointinTriangle(T2, T1.p1) or
@@ -349,11 +342,11 @@ function Physics_Tests()
 	assert(CirclevsTriangle(circle, T))
 
 	-- edge intersection
-	p1 = Vector:new(0,-5)
+	p1 = Vector:new(0,0)
 	p2 = Vector:new(5,0)
 	p3 = Vector:new(0,5)
-	p4 = Vector:new(-1,0)
-	circle = BoundingSphere:new(p4, 2)
+	p4 = Vector:new(-1,3)
+	circle = BoundingSphere:new(p4, 1.5)
 	T =  BoundingTriangle:new(p1, p2, p3)
 	assert(CirclevsTriangle(circle, T))
 
