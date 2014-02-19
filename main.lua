@@ -24,9 +24,6 @@ TO DO:
 
 7. some boss AI
 
-9. a "turret" enemy -- one that stops and shoots at the player's position,
-					flying away (effectively dying but no score) after t time passes
-
 10. a "charger" enemy -- a bigger one that gradually moves down and shoots a set pattern
 						 -- basically a meat shield, perhaps it can have a ground tank variation that scoots around
 
@@ -98,9 +95,14 @@ function love.update(dt)
 				table.insert(enemies, enemy)
 			end
 
-			-- spawn a turret
-			turret = Turret:new(Vector:new(300, 100), Vector:new(650, 100), 25, .5, 9, 200, 32, 32)
-			table.insert(enemies, turret)
+			-- spawn turrets
+			for i = 1, 5 do
+				x_iter = i * 125
+				pos = Vector:new(x_iter, -100)
+				targetPos = Vector:new(pos.x, pos.y + 200)
+				turret = Turret:new(pos, targetPos, 50, .5, 1, 100, 32, 32)
+				table.insert(enemies, turret)
+			end
 
 			shmupgame.stateNotLoaded = false
 
@@ -153,6 +155,10 @@ function love.update(dt)
 
 				table.insert(enemies, enemy)
 			end
+			-- mean, scarey turret
+			turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, .5, 9, 100, 100, 32)
+			table.insert(enemies, turret)
+
 			shmupgame.stateNotLoaded = false
 
 		end

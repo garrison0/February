@@ -146,7 +146,7 @@ Player = Object:new({class = "Player"})
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			shooting = false, fire_delay = 0, 
 			width = 32, height = 32, bulletLevel = 1, bullets = {},
-			laserOn = false, laserEnergy = 250,
+			laserOn = false, laserEnergy = 1000,
 			a = 0, s = 0, d = 0, w = 0
 		})
 		setmetatable(player,self)
