@@ -83,22 +83,14 @@ function love.update(dt)
 
 	-- level 1
 	if (shmupgame.state == "level1") and (shmupgame.stateNotLoaded == true) then
-		-- player
+
+		-- load pre-level stuff
 		player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
 		player.bulletLevel = 1
 
 		powerups = {}
 		enemies = {}
 
-		-- enemies
-		for i = 1,7 do
-			x_iter = 95 * i
-			y_iter = -200 + 20 * i
-			enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
-			table.insert(enemies, enemy)
-		end
-
-		shmupgame.stateNotLoaded = false
 	end
 
 	if shmupgame.state == "level1" then
@@ -109,8 +101,8 @@ function love.update(dt)
 			-- spawn enemies
 			for i = 1,7 do
 				x_iter = 95 * i
-				y_iter = -200 + 20 * i
-				enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
+				enemy = Enemy:new(Vector:new(x_iter, 0), Vector:new(0, 300))
+				enemy.life = 5
 				table.insert(enemies, enemy)
 			end
 			shmupgame.stateNotLoaded = false
@@ -134,10 +126,34 @@ function love.update(dt)
 		if wave2_On == true and shmupgame.stateNotLoaded == true then
 
 			-- spawn enemies
-			for i = 1,7 do
-				x_iter = 95 * i
-				y_iter = -200 + 20 * i
-				enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 100))
+			for i = 1,8 do
+				y_iter = -500 + 50 * i
+
+				enemy = Enemy:new(Vector:new(shmupgame.width / 4, y_iter), Vector:new(150, 250),
+								 "z-shape", 100, 500, "right")
+
+				table.insert(enemies, enemy)
+			end
+			for i = 1,8 do
+				y_iter = -500 + 50 * i
+
+				enemy = Enemy:new(Vector:new(3 * shmupgame.width / 4, y_iter), Vector:new(150, 250),
+								 "z-shape", 100, 500, "left")
+
+				table.insert(enemies, enemy)
+			end
+			for i = 1,8 do
+				y_iter = -1250 + 50 * i
+
+				if(i % 2 == 0) then
+					turningDirection = "right"
+				else
+					turningDirection = "left"
+				end
+
+				enemy = Enemy:new(Vector:new(shmupgame.width / 2, y_iter), Vector:new(100, 250), "z-shape",
+								 100, 600, turningDirection)
+
 				table.insert(enemies, enemy)
 			end
 			shmupgame.stateNotLoaded = false
@@ -185,6 +201,7 @@ function love.update(dt)
 		if boss_dead == true and shmupgame.stateNotLoaded == true then
 
 			-- CONGRATS screen + button to go back to main menu
+			mouse_pressed_pos = Vector:new(0, 0)
 			start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
 			shmupgame.state = "menu"
 
@@ -206,7 +223,7 @@ function love.update(dt)
 			for i, v in ipairs(enemies) do
 				if detect(v, player.laser) then
 
-					if(math.random(1, 10) == 1) then
+					if(math.random(1, 15) == 1) then
 						powerup = PowerUp:new(v.pos, 25)
 						table.insert(powerups, powerup)
 					end
@@ -269,10 +286,18 @@ function love.update(dt)
 
 		-- update the enemies
 		for i, v in ipairs(enemies) do
-			-- check for collisions with player
+
 			v:update(dt)
-			if detect(v, player) then
+			if v.life <= 0 then
 				table.remove(enemies, i)
+			end
+
+			-- collide against player
+			if detect(v, player) then
+				-- lol back to the menu. temporary.
+				mouse_pressed_pos = Vector:new(0, 0)
+				start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
+				shmupgame.state = "menu"
 			end
 		end
 		
@@ -288,6 +313,7 @@ function love.update(dt)
 					table.remove(player.bullets, i)
 				end
 			end
+			-- bullets and boss
 			if (boss ~= nil) then
 				if detect(v, boss) then
 					table.remove(player.bullets, i)
@@ -300,6 +326,7 @@ end
 
 -- input
 function love.keypressed(key)
+
 	if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
 		player[key] = 1 -- Set key flag pressed
 		print(key .. " " .. player[key])
@@ -307,6 +334,7 @@ function love.keypressed(key)
 end
 
 function love.keyreleased(key)
+
 	if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
 		player[key] = 0 -- Set key flag released
 		print(key .. " " .. player[key])
@@ -332,12 +360,12 @@ function love.mousepressed(x, y, button)
 end
 
 function love.mousereleased(x, y, button)
+
 	if button == 'l' then
 		if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
 			player.shooting = false
 		end
 	end
-
 
 	if button == 'r' then
 		if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
@@ -350,6 +378,7 @@ function love.draw()
 
 	if shmupgame.state == "menu" then
 
+		love.graphics.print("SHMUP GAEM XDDD", 100, 50)
 		start_button:draw()
 
 	end
@@ -393,6 +422,11 @@ function love.draw()
 	    if(boss ~= nil) then
 	    	boss:draw()
 	    end
+
+	    -- UI
+	    love.graphics.print("Lives: " .. "lol someone should put lives in", 25, 25)
+	    love.graphics.print("Laser Energy: " .. player.laserEnergy, 25, 50)
+	    love.graphics.print("Score: " .. tostring(1), shmupgame.width - 125, 25)
 	end
 
 end

@@ -70,11 +70,11 @@ BoundingTriangle = Object:new({class = "BoundingTriangle"})
 
 Game = Object:new({class = "Game"})
 
-	function Game:new(initial_state, w, h, fullscreen)
+	function Game:new(initial_state, width, height, fullscreen)
 
-		love.window.setMode(w, h, {fullscreen = fullscreen or false})
-		local game = {w = w, h = h, stateNotLoaded = true, 
-									fullscreen = fullscreen or false}
+		love.window.setMode(width, height, {fullscreen = fullscreen or false})
+		local game = {width = width or 0, height = height or 0, 
+					stateNotLoaded = true, fullscreen = fullscreen or false}
 		game.state = initial_state or "level1"
 		setmetatable(game, self)
 		self.__index = self
@@ -84,8 +84,8 @@ Game = Object:new({class = "Game"})
 
 	function Game:resizeWindow(w, h)
 
-		self.w = w
-		self.h = h
+		self.width = w
+		self.height = h
 		love.window.setMode(w, h)
 
 	end
@@ -144,9 +144,9 @@ Player = Object:new({class = "Player"})
 	function Player:new(pos, vel)
 		local player = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
-			shooting = false, laserOn = false, fire_delay = 0, 
+			shooting = false, fire_delay = 0, 
 			width = 32, height = 32, bulletLevel = 1, bullets = {},
-			laserOn = false,
+			laserOn = false, laserEnergy = 250,
 			a = 0, s = 0, d = 0, w = 0
 		})
 		setmetatable(player,self)
@@ -186,6 +186,16 @@ Player = Object:new({class = "Player"})
 		-- delay
 		self.fire_delay = self.fire_delay - dt
 
+		-- deplete laser energy
+		if (self.laserOn) then
+
+			self.laserEnergy = self.laserEnergy - (100 * dt)
+			if self.laserEnergy <= 0 then
+
+				self.laserOn = false
+
+			end
+		end
 	end
 
 	function Player:shoot()
@@ -235,42 +245,114 @@ Player = Object:new({class = "Player"})
 
 	function Player:shootLaser(mouse_pos)
 
-		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
-		ship_to_mouse = (mouse_pos - ship_middle)
-		ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
+		if self.laserEnergy > 0 then
+			ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+			ship_to_mouse = (mouse_pos - ship_middle)
+			ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
 
-		spawn_pos = ship_middle + (ship_to_mouse * 32)
-		end_pos = spawn_pos + (ship_to_mouse * 225)
-		laser = Laser:new(spawn_pos, end_pos, 1, 5)
+			spawn_pos = ship_middle + (ship_to_mouse * 32)
+			end_pos = spawn_pos + (ship_to_mouse * 225)
+			laser = Laser:new(spawn_pos, end_pos, 1, 5)
 
-		player.laser = laser
-		player.laserOn = true
-
+			player.laser = laser
+			player.laserOn = true
+		end
 	end
 
 Enemy = Object:new({class = "Enemy"})
 
-	function Enemy:new(pos, vel)
+	function Enemy:new(pos, vel, pathingType, minDepth, maxDepth, turningDirection)
 		local enemy = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
-			amplitude = 200, width = 32, height = 32
+			pathingType = pathingType or "standard", amplitude = 200, 
+			life = 12, width = 32, height = 32
 		})
+
+		-- special parameters for this pathing type
+		if pathingType == "z-shape" then
+
+			enemy.minDepth = minDepth
+			enemy.maxDepth = maxDepth
+			enemy.turningDirection = turningDirection
+			enemy.pathingPhase = 0
+
+		end
+
 		setmetatable(enemy,self)
 		self.__index = self
 		return enemy
 	end
 
 	function Enemy:collision()
+
 		local p1 = self.pos
 		local p2 = Vector:new(self.pos.x + 32, self.pos.y)
 		local p3 = Vector:new(self.pos.x + 16, self.pos.y + 32)
 		return BoundingAggregate:new({BoundingTriangle:new(p1, p2, p3)})
+
 	end
 
 	function Enemy:update(dt)
-		self.pos.x = self.pos.x + math.sin(self.pos.y / 10) * self.amplitude * dt
-		self.pos.y = self.pos.y + self.vel.y * dt
 
+		-- update life
+		self.life = self.life - dt
+
+		if self.pathingType == "standard" then
+
+			self.pos = self.pos + self.vel * dt
+
+		end
+
+		-- moves like a wave
+		if self.pathingType == "wave" then
+
+			self.pos.x = self.pos.x + math.sin(self.pos.y / 10) * self.amplitude * dt
+			self.pos.y = self.pos.y + self.vel.y * dt
+
+		end
+
+		-- z-shape
+		if self.pathingType == "z-shape" then
+
+			if self.pathingPhase == 0 then
+
+				self.pos.y = self.pos.y + self.vel.y * dt
+
+				if self.pos.y >= self.maxDepth then
+
+					self.pathingPhase = 1
+					-- update velocity according to turn direction
+					if self.turningDirection == "right" then
+
+						self.vel = Vector:new(self.vel.x, -self.vel.y)
+
+					elseif self.turningDirection == "left" then
+
+						self.vel = -1 * self.vel
+
+					end
+				end
+			end
+
+			if self.pathingPhase == 1 then
+
+
+				self.pos = self.pos + self.vel * dt
+
+				if self.pos.y <= self.minDepth then
+
+					self.pathingPhase = 2
+
+				end
+			end
+
+			if self.pathingPhase == 2 then
+
+				self.vel = Vector:new(0, -self.vel.y)
+				self.pathingType = "standard"
+
+			end
+		end
 	end
 
 Boss = Object:new({class = "Boss"})
@@ -350,12 +432,12 @@ Bullet = Object:new({class = "Bullet"})
 
 Laser = Object:new({class = "Laser"})
 
-	function Laser:new(spawn_pos, end_pos, damage, lifetime)
+	function Laser:new(spawn_pos, end_pos, damage)
 
 		local laser = Object:new({
 			spawn_pos = spawn_pos or Vector:new(0, 0), 
 			end_pos = end_pos or Vector:new(0, 0),
-			lifetime = lifetime or 0, damage = damage or 0,
+			damage = damage or 0,
 			angle = 0, goal_angle = 0, rot_vel = math.pi / 1200
 		})
 
@@ -420,14 +502,6 @@ Laser = Object:new({class = "Laser"})
 			self.end_pos = ship_middle + (spawn_pos * 258)
 
 		end
-
-		-- print("goal: " .. self.goal_angle .. "  self.angle: " .. self.angle)
-		-- update life
-		self.lifetime = self.lifetime - dt
-		if self.lifetime < 0 then
-			player.laserOn = false
-		end
-
 	end
 
 	function Laser:draw()
