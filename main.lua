@@ -220,12 +220,7 @@ function love.update(dt)
 			for i, v in ipairs(enemies) do
 				if detect(v, player.laser) then
 
-					if(math.random(1, 15) == 1) then
-						powerup = PowerUp:new(v.pos, 25)
-						table.insert(powerups, powerup)
-					end
-
-					table.remove(enemies, i)
+					v.health = v.health - player.laser.damage
 					
 				end
 			end
@@ -309,6 +304,13 @@ function love.update(dt)
 			if v.life <= 0 then
 				table.remove(enemies, i)
 			end
+			if v.health <= 0 then
+				if(math.random(1, 10) == 1) then
+					powerup = PowerUp:new(v.pos, 25)
+					table.insert(powerups, powerup)
+				end
+				table.remove(enemies, i)
+			end
 
 			-- collide against player
 			if detect(v, player) then
@@ -323,11 +325,7 @@ function love.update(dt)
 			for j, k in ipairs(enemies) do
 				-- check collision between bullets and enemies
 				if detect(v,k) then
-					if(math.random(1, 10) == 1) then
-						powerup = PowerUp:new(k.pos, 25)
-						table.insert(powerups, powerup)
-					end
-					table.remove(enemies, j)
+					k.health = k.health - v.damage
 					table.remove(player.bullets, i)
 				end
 			end
@@ -335,7 +333,7 @@ function love.update(dt)
 			if (boss ~= nil) then
 				if detect(v, boss) then
 					table.remove(player.bullets, i)
-					boss.health = boss.health - 5
+					boss.health = boss.health - v.damage
 				end
 			end
 		end

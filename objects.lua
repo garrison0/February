@@ -202,7 +202,7 @@ Player = Object:new({class = "Player"})
 		-- level 1
 		if (player.bulletLevel == 1) then
 			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
-										   Vector:new(0,1000), 1, 1)
+										   Vector:new(0,1000), 1, 10)
 
 			player.fire_delay = .3
 			table.insert(player.bullets, bullet)
@@ -211,10 +211,10 @@ Player = Object:new({class = "Player"})
 		-- level 2
 		if (player.bulletLevel == 2) then
 			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 1)
+										Vector:new(0,1000), 1, 10)
 
 			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 1)
+										Vector:new(0,1000), 1, 10)
 
 			player.fire_delay = .2
 			table.insert(player.bullets, bullet)
@@ -224,16 +224,16 @@ Player = Object:new({class = "Player"})
 		-- level 3
 		if (player.bulletLevel == 3) then
 			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 1)
+										Vector:new(0,1000), 1, 10)
 
 			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 1)
+										Vector:new(0,1000), 1, 10)
 
 			bullet3 = Bullet:new(Vector:new(player.pos.x + player.width, player.pos.y), 
-										Vector:new(200,800), 1, 1)
+										Vector:new(200,800), 1, 10)
 
 			bullet4 = Bullet:new(Vector:new(player.pos.x, player.pos.y), 
-										Vector:new(-200,800), 1, 1)
+										Vector:new(-200,800), 1, 10)
 
 			player.fire_delay = .1
 			table.insert(player.bullets, bullet)
@@ -265,7 +265,7 @@ Enemy = Object:new({class = "Enemy"})
 		local enemy = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			pathingType = pathingType or "standard", amplitude = 200, 
-			life = 12, width = 32, height = 32
+			health = 5, life = 12, width = 32, height = 32
 		})
 
 		-- special parameters for this pathing type
@@ -367,7 +367,7 @@ Turret = Object:new({class = "Turret"})
 		turret = Object:new({pos = pos, targetPos = targetPos or Vector:new(0,0),
 				  velScalar = velScalar or 50,
 				  fireDelay = fireDelay or 1, width = width or 32, height = height or 32,
-				  bulletLevel = bulletLevel or 1, health = health or 500, life = life or 20})
+				  bulletLevel = bulletLevel or 1, health = health or 100, life = life or 20})
 		self.__index = self
 		setmetatable(turret, self)
 		return turret
@@ -410,10 +410,11 @@ Turret = Object:new({class = "Turret"})
 			if self.bulletLevel == 9 then
 
 				velocity = velocity:rotate(-math.pi / 2)
+				variance = math.random(-1, 1)
 
-				for i = 1, 6 do
+				for i = 1, 11 do
 
-					velocity = velocity:rotate(math.pi / 6)
+					velocity = velocity:rotate(math.pi / (variance + 11))
 					bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10)
 					table.insert(shmupgame.enemyBullets, bullet)
 
