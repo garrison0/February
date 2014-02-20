@@ -37,7 +37,7 @@ function love.load()
 	Physics_Tests()
 
 	-- shmupgame
-	shmupgame = Game:new("menu", 800, 700, false)
+	shmupgame = Game:new("menu", 800, 700, true)
 
 	-- load menu stuff
 
@@ -95,28 +95,57 @@ function love.update(dt)
 
 			-- spawn turrets
 			for i = 1, 5 do
+
 				x_iter = i * 125
 				pos = Vector:new(x_iter, -100)
 				targetPos = Vector:new(pos.x, pos.y + 200)
-				turret = Turret:new(pos, targetPos, 50, .5, 1, 100, 32, 32)
+				turret = Turret:new(pos, targetPos, 50, .7, 1, 100, 32, 32)
 				table.insert(enemies, turret)
+
 			end
+
+			-- delay for in-wave spawning
+			enemySpawnDelay = 15
 
 			shmupgame.stateNotLoaded = false
 
 		end
 
-		-- the check whether to move on or not. 
+		-- the check whether to move on or to spawn more small enemies
 		if wave1_On == true and shmupgame.stateNotLoaded == false then
 
-			if enemies[1] == nil then
+			if (enemies[1] == nil) then
 
 				wave1_On = false
 				wave2_On = true
 				shmupgame.stateNotLoaded = true
 
-			end
+			else
 
+				enemySpawnDelay = enemySpawnDelay - dt
+
+				if enemySpawnDelay <= 0 then
+					-- spawn enemies
+					x_iter = math.random(50, shmupgame.width - 50)
+
+					for i = 1,8 do
+						y_iter = -500 + 50 * i
+
+						if(x_iter < shmupgame.width / 2) then
+							turningDirection = "right"
+						else
+							turningDirection = "left"
+						end
+
+						enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(200, 250), "z-shape",
+										 200, 550, turningDirection)
+
+						table.insert(enemies, enemy)
+					end
+
+					enemySpawnDelay = 15
+				end
+			end
 		end
 
 		-- loading part
@@ -154,7 +183,7 @@ function love.update(dt)
 				table.insert(enemies, enemy)
 			end
 			-- mean, scarey turret
-			turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, .5, 9, 100, 100, 32)
+			turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, 1, 9, 100, 100, 32)
 			table.insert(enemies, turret)
 
 			shmupgame.stateNotLoaded = false
@@ -171,15 +200,40 @@ function love.update(dt)
 				wave3_On = true
 				shmupgame.stateNotLoaded = true
 
-			end
+			else
 
+				enemySpawnDelay = enemySpawnDelay - dt
+
+				if enemySpawnDelay <= 0 then
+					-- spawn enemies
+					x_iter = math.random(50, shmupgame.width - 50)
+
+					for i = 1,8 do
+						y_iter = -500 + 50 * i
+
+						if(x_iter < shmupgame.width / 2) then
+							turningDirection = "right"
+						else
+							turningDirection = "left"
+						end
+
+						enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(200, 250), "z-shape",
+										 200, 550, turningDirection)
+
+						table.insert(enemies, enemy)
+					end
+
+					enemySpawnDelay = 15
+				end
+
+			end
 		end
 
 		-- loading part
 		if wave3_On == true and shmupgame.stateNotLoaded == true then
 
 			-- spawn boss
-			boss = Boss:new(Vector:new(100, 50), Vector:new(0,0), 600, 200, 2500)
+			boss = Boss:new(Vector:new(100, 50), Vector:new(50,0), 600, 200, 2500, .15)
 
 			shmupgame.stateNotLoaded = false
 
@@ -203,8 +257,9 @@ function love.update(dt)
 
 			-- CONGRATS screen + button to go back to main menu
 			mouse_pressed_pos = Vector:new(0, 0)
-			start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
+			start_button = MenuButton:new("START GAME. YOU WON, BTW.", Vector:new(100, 200), 400, 100)
 			shmupgame.state = "menu"
+			boss_dead = false
 
 		end
 
@@ -315,11 +370,15 @@ function love.update(dt)
 		for i, v in ipairs(enemies) do
 
 			v:update(dt)
+
 			if v.life <= 0 then
+
 				table.remove(enemies, i)
+
 			end
+
 			if v.health <= 0 then
-				if(math.random(1, 10) == 1) then
+				if(math.random(1, 20) == 1) then
 					powerup = PowerUp:new(v.pos, 25)
 					table.insert(powerups, powerup)
 				end

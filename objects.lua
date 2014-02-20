@@ -366,7 +366,8 @@ Turret = Object:new({class = "Turret"})
 	function Turret:new(pos, targetPos, velScalar, fireDelay, bulletLevel, health, width, height)
 		turret = Object:new({pos = pos, targetPos = targetPos or Vector:new(0,0),
 				  velScalar = velScalar or 50,
-				  fireDelay = fireDelay or 1, width = width or 32, height = height or 32,
+				  fireDelay = fireDelay or 1, fireRate = fireDelay or 1, 
+				  width = width or 32, height = height or 32,
 				  bulletLevel = bulletLevel or 1, health = health or 100, life = life or 20})
 		self.__index = self
 		setmetatable(turret, self)
@@ -421,11 +422,8 @@ Turret = Object:new({class = "Turret"})
 				end
 			end
 
-			-- refresh fireDelay
-			self.fireDelay = .5
-
+			self.fireDelay = self.fireRate
 		end
-
 	end
 
 	function Turret:collision()
@@ -460,12 +458,12 @@ Turret = Object:new({class = "Turret"})
 
 Boss = Object:new({class = "Boss"})
 
-	function Boss:new(pos, vel, width, height, health)
+	function Boss:new(pos, vel, width, height, health, fireDelay)
 
 		local boss = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			health = health or 0, width = width or 0, height = height or 0,
-			fireDelay = fireDelay or .5
+			fireRate = fireDelay or .5, fireDelay = fireDelay or .5
 		})
 		setmetatable(boss, self)
 		self.__index = self
@@ -474,6 +472,13 @@ Boss = Object:new({class = "Boss"})
 	end
 
 	function Boss:update(dt)
+
+		self.pos = self.pos + self.vel * dt
+
+		if self.pos.x + self.width > shmupgame.width - 50 or self.pos.x < 50 then
+			self.vel.x = self.vel.x * -1
+		end
+
 
 		self.fireDelay = self.fireDelay - dt
 
@@ -498,9 +503,10 @@ Boss = Object:new({class = "Boss"})
 				bullet = Bullet:new(points[i], velocity, 10, 10)
 				table.insert(shmupgame.enemyBullets, bullet)
 
-				self.fireDelay = .2
-
 			end
+
+			self.fireDelay = self.fireRate
+
 		end
 	end
 
