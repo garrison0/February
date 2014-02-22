@@ -147,7 +147,8 @@ Player = Object:new({class = "Player"})
 			shooting = false, fire_delay = 0, 
 			width = 32, height = 32, bulletLevel = 1, bullets = {},
 			laserOn = false, laserEnergy = 100000,
-			a = 0, s = 0, d = 0, w = 0
+			a = 0, s = 0, d = 0, w = 0,
+			isMoving = false
 		})
 		setmetatable(player,self)
 		self.__index = self
@@ -163,19 +164,27 @@ Player = Object:new({class = "Player"})
 	end
 
 	function Player:update(dt)
-		-- player
+
+		-- update flag (used in laser)
+		if self.a ~= 0 or self.s ~= 0 or self.d ~= 0 or self.w ~= 0 then 
+			self.isMovingY = true; self.isMovingX = true else self.isMoving = false end
+
 		-- keep it on screen
 		if self.pos.x + self.width >= shmupgame.width then
 			self.pos.x = shmupgame.width - self.width
+			self.isMovingX = false
 		end
 		if self.pos.x <= 0 then
 			self.pos.x = 0
+			self.isMovingX = false
 		end
 		if self.pos.y + self.height >= shmupgame.height then
 			self.pos.y = shmupgame.height - self.height
+			self.isMovingY = false
 		end
 		if self.pos.y <= 0 then
 			self.pos.y = 0
+			self.isMovingY = false
 		end
 
 		self.pos.x = self.pos.x - self.vel.x * dt * self.a
@@ -609,6 +618,7 @@ Laser = Object:new({class = "Laser"})
 		laser.angle = math.atan2(vec_A.y, vec_A.x)
 		if laser.angle < 0 then laser.angle = laser.angle + math.pi * 2 end
 
+		-- for later use
 		clockwise_angle = 0
 		counterclockwise_angle = 0
 
@@ -633,6 +643,28 @@ Laser = Object:new({class = "Laser"})
 	end
 
 	function Laser:update(dt, mouse_pos)
+
+		-- update position if the ship is moving
+		if player.isMovingX then
+
+			self.spawn_pos.x = self.spawn_pos.x - player.vel.x * dt * player.a
+									  + player.vel.x * dt * player.d
+			
+
+			self.end_pos.x = self.end_pos.x - player.vel.x * dt * player.a
+									  + player.vel.x * dt * player.d
+			
+		end
+
+		if player.isMovingY then
+			
+			self.spawn_pos.y = self.spawn_pos.y + player.vel.y * dt * player.s
+									  - player.vel.y * dt * player.w
+
+			self.end_pos.y = self.end_pos.y + player.vel.y * dt * player.s
+									  - player.vel.y * dt * player.w
+
+		end
 
 		-- calculate new vector based on mouse position
 		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)

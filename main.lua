@@ -273,7 +273,7 @@ function love.update(dt)
 
 			-- because i don't know fuck you i don't feel like fixing that bug
 			-- it's now a design decision!
-			player.vel = Vector:new(0, 0)
+			--player.vel = Vector:new(0, 0)
 
 			-- check for oollision with enemies
 			for i, v in ipairs(enemies) do
