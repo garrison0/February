@@ -37,7 +37,7 @@ function love.load()
 	Physics_Tests()
 
 	-- shmupgame
-	shmupgame = Game:new("menu", 800, 700, true)
+	shmupgame = Game:new("menu", 800, 700, false)
 
 	-- load menu stuff
 
@@ -99,7 +99,7 @@ function love.update(dt)
 				x_iter = i * 125
 				pos = Vector:new(x_iter, -100)
 				targetPos = Vector:new(pos.x, pos.y + 200)
-				turret = Turret:new(pos, targetPos, 50, .7, 1, 100, 32, 32)
+				turret = Turret:new(pos, targetPos, 50, 100, 1, 100, 32, 32)
 				table.insert(enemies, turret)
 
 			end
@@ -183,7 +183,7 @@ function love.update(dt)
 				table.insert(enemies, enemy)
 			end
 			-- mean, scarey turret
-			turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, 1, 9, 100, 100, 32)
+			turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, 1, 9, 350, 100, 32)
 			table.insert(enemies, turret)
 
 			shmupgame.stateNotLoaded = false

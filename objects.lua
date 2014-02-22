@@ -146,7 +146,7 @@ Player = Object:new({class = "Player"})
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			shooting = false, fire_delay = 0, 
 			width = 32, height = 32, bulletLevel = 1, bullets = {},
-			laserOn = false, laserEnergy = 1000,
+			laserOn = false, laserEnergy = 100000,
 			a = 0, s = 0, d = 0, w = 0
 		})
 		setmetatable(player,self)
@@ -607,6 +607,10 @@ Laser = Object:new({class = "Laser"})
 		vec_A = end_pos - ship_middle
 		
 		laser.angle = math.atan2(vec_A.y, vec_A.x)
+		if laser.angle < 0 then laser.angle = laser.angle + math.pi * 2 end
+
+		clockwise_angle = 0
+		counterclockwise_angle = 0
 
 		setmetatable(laser, self)
 		self.__index = self
@@ -637,30 +641,64 @@ Laser = Object:new({class = "Laser"})
 		vec_A = ship_to_mouse
 
 		self.goal_angle = math.atan2(vec_A.y, vec_A.x)
-		
-		-- rotate in that direction until the mouse is released and the laser is thrown out
-		if self.goal_angle > (self.angle + self.rot_vel )then
 
-			self.angle = self.angle + self.rot_vel
+		-- keep it in the range [0, 2pi); 
+		-- note that since (0,0) is top left, positive rotation is clockwise.
+		if self.goal_angle < 0 then self.goal_angle = self.goal_angle + math.pi * 2 end
 
-			spawn_pos = self.spawn_pos - ship_middle
-			spawn_pos = spawn_pos:rotate(self.rot_vel)
-			spawn_pos = spawn_pos * (1 / spawn_pos:norm())
-			self.spawn_pos = ship_middle + (spawn_pos * 32)
-			self.end_pos = ship_middle + (spawn_pos * 258)
+		-- find the counterclockwise and clockwise angles if we need to rotate
+		if self.angle < (self.goal_angle - self.rot_vel) or self.angle > (self.goal_angle + self.rot_vel) then
 
+			if self.angle > self.goal_angle then
+
+				counterclockwise_angle = self.angle - self.goal_angle
+				clockwise_angle = 2*math.pi - self.angle + self.goal_angle
+
+			elseif self.goal_angle > self.angle then
+
+				clockwise_angle = self.goal_angle - self.angle
+				counterclockwise_angle = 2*math.pi - self.goal_angle + self.angle
+			
+			end
 		end
 
-		if self.goal_angle < (self.angle - self.rot_vel) then
+		--print("clck: " .. tostring(clockwise_angle) .. " cc: " .. tostring(counterclockwise_angle) .. " angle: " .. tostring(self.angle))
+		
+		-- determine if we need to rotate
+		if self.angle < (self.goal_angle - self.rot_vel) or self.angle > (self.goal_angle + self.rot_vel) then
 
-			self.angle = self.angle - self.rot_vel
-			
-			spawn_pos = self.spawn_pos - ship_middle
-			spawn_pos = spawn_pos:rotate(-1 * self.rot_vel)
-			spawn_pos = spawn_pos * (1 / spawn_pos:norm())
-			self.spawn_pos = ship_middle + (spawn_pos * 32)
-			self.end_pos = ship_middle + (spawn_pos * 258)
+			-- determine which angle is smallest rotate in
+			if clockwise_angle < (counterclockwise_angle) then
 
+				-- rotate counterclockwise
+				self.angle = self.angle + self.rot_vel
+
+				-- keep it in the range (0, 2pi]
+				self.angle = self.angle % (2*math.pi)
+
+				spawn_pos = self.spawn_pos - ship_middle
+				spawn_pos = spawn_pos:rotate(self.rot_vel)
+				spawn_pos = spawn_pos * (1 / spawn_pos:norm())
+				self.spawn_pos = ship_middle + (spawn_pos * 32)
+				self.end_pos = ship_middle + (spawn_pos * 258)
+
+			end
+
+			if counterclockwise_angle < (clockwise_angle) then
+
+				-- rotate clockwise
+				self.angle = self.angle - self.rot_vel
+
+				-- keep it in range (0, 2pi]
+				if self.angle <= 0 then self.angle = 2*math.pi + self.angle end
+
+				spawn_pos = self.spawn_pos - ship_middle
+				spawn_pos = spawn_pos:rotate(- self.rot_vel)
+				spawn_pos = spawn_pos * (1 / spawn_pos:norm())
+				self.spawn_pos = ship_middle + (spawn_pos * 32)
+				self.end_pos = ship_middle + (spawn_pos * 258)
+
+			end
 		end
 	end
 
