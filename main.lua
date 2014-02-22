@@ -61,7 +61,7 @@ function love.update(dt)
 		if (detect(start_button, click)) then
 			shmupgame.stateNotLoaded = true
 			shmupgame.state = "level1"
-			wave1_On = true
+			wave3_On = true
 			start_button = nil
 		end
 
@@ -72,7 +72,7 @@ function love.update(dt)
 
 		-- load pre-level stuff
 		player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
-		player.bulletLevel = 1
+		player.bulletLevel = 3
 
 		powerups = {}
 		enemies = {}
@@ -233,7 +233,7 @@ function love.update(dt)
 		if wave3_On == true and shmupgame.stateNotLoaded == true then
 
 			-- spawn boss
-			boss = Boss:new(Vector:new(100, 50), Vector:new(50,0), 600, 200, 2500, .15)
+			boss = Boss:new(Vector:new(50, 50), Vector:new(50,0), 600, 200, 2500, .1)
 
 			shmupgame.stateNotLoaded = false
 
@@ -266,14 +266,21 @@ function love.update(dt)
 		-- update the player
 		player:update(dt)
 
+		if player.isChargingLaser then
+			
+			-- attempt to make the laser feel better
+			player.vel = Vector:new(50, 50)
+		
+		else
+			
+			player.vel = Vector:new(300, 250)
+		
+		end
+
 		-- update laser
 		if player.laserOn then
 			mouse_pos = Vector:new(love.mouse.getX(), love.mouse.getY())
 			player.laser:update(dt, mouse_pos)
-
-			-- because i don't know fuck you i don't feel like fixing that bug
-			-- it's now a design decision!
-			--player.vel = Vector:new(0, 0)
 
 			-- check for oollision with enemies
 			for i, v in ipairs(enemies) do
@@ -290,10 +297,6 @@ function love.update(dt)
 					boss.health = boss.health - player.laser.damage
 				end
 			end
-		else 
-
-			player.vel = Vector:new(300, 250)
-
 		end
 
 		-- shoot bullets
@@ -460,6 +463,8 @@ function love.mousereleased(x, y, button)
 	if button == 'r' then
 		if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
 			player.laserOn = false
+			player.isChargingLaser = false
+			player.currentCharge = 0
 		end
 	end
 end
@@ -521,6 +526,7 @@ function love.draw()
 	    -- UI
 	    love.graphics.print("Lives: " .. "lol someone should put lives in", 25, 25)
 	    love.graphics.print("Laser Energy: " .. player.laserEnergy, 25, 50)
+	    love.graphics.print("Current charge: " .. player.currentCharge, 25, 75)
 	    love.graphics.print("Score: " .. tostring(1), shmupgame.width - 125, 25)
 	end
 

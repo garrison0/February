@@ -148,7 +148,9 @@ Player = Object:new({class = "Player"})
 			width = 32, height = 32, bulletLevel = 1, bullets = {},
 			laserOn = false, laserEnergy = 100000,
 			a = 0, s = 0, d = 0, w = 0,
-			isMoving = false
+			isMovingX = false, isMovingY = false,
+			isChargingLaser = false, chargeLength = 3,
+			currentCharge = 0
 		})
 		setmetatable(player,self)
 		self.__index = self
@@ -167,7 +169,8 @@ Player = Object:new({class = "Player"})
 
 		-- update flag (used in laser)
 		if self.a ~= 0 or self.s ~= 0 or self.d ~= 0 or self.w ~= 0 then 
-			self.isMovingY = true; self.isMovingX = true else self.isMoving = false end
+			self.isMovingY = true; self.isMovingX = true else self.isMoving = false 
+		end
 
 		-- keep it on screen
 		if self.pos.x + self.width >= shmupgame.width then
@@ -192,8 +195,34 @@ Player = Object:new({class = "Player"})
 		self.pos.y = self.pos.y + self.vel.y * dt * self.s
 									  - self.vel.y * dt * self.w
 
-		-- delay
+		-- delay for regular shooting
 		self.fire_delay = self.fire_delay - dt
+
+		-- build up charge
+		if self.isChargingLaser then
+
+			self.currentCharge = self.currentCharge + dt
+			self.shooting = false
+
+		end
+
+		if self.currentCharge >= self.chargeLength and player.laserOn == false then
+
+				ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+				ship_to_mouse = (mouse_pos - ship_middle)
+				ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
+
+				--spawn_pos = ship_middle + (ship_to_mouse * 32)
+				--end_pos = spawn_pos + (ship_to_mouse * 225)
+				spawn_pos = ship_middle + Vector:new(0, -32) 
+				end_pos = spawn_pos + Vector:new(0, -225) 
+
+				laser = Laser:new(spawn_pos, end_pos, 1, 5)
+
+				self.laser = laser
+				self.laserOn = true
+
+		end
 
 		-- deplete laser energy
 		if (self.laserOn) then
@@ -220,10 +249,10 @@ Player = Object:new({class = "Player"})
 		-- level 2
 		if (player.bulletLevel == 2) then
 			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 10)
+										Vector:new(0,1000), 1, 8)
 
 			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 10)
+										Vector:new(0,1000), 1, 8)
 
 			player.fire_delay = .2
 			table.insert(player.bullets, bullet)
@@ -233,16 +262,16 @@ Player = Object:new({class = "Player"})
 		-- level 3
 		if (player.bulletLevel == 3) then
 			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 10)
+										Vector:new(0,1000), 1, 8)
 
 			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 10)
+										Vector:new(0,1000), 1, 8)
 
 			bullet3 = Bullet:new(Vector:new(player.pos.x + player.width, player.pos.y), 
-										Vector:new(200,800), 1, 10)
+										Vector:new(200,800), 1, 5)
 
 			bullet4 = Bullet:new(Vector:new(player.pos.x, player.pos.y), 
-										Vector:new(-200,800), 1, 10)
+										Vector:new(-200,800), 1, 5)
 
 			player.fire_delay = .1
 			table.insert(player.bullets, bullet)
@@ -255,16 +284,9 @@ Player = Object:new({class = "Player"})
 	function Player:shootLaser(mouse_pos)
 
 		if self.laserEnergy > 0 then
-			ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
-			ship_to_mouse = (mouse_pos - ship_middle)
-			ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
 
-			spawn_pos = ship_middle + (ship_to_mouse * 32)
-			end_pos = spawn_pos + (ship_to_mouse * 225)
-			laser = Laser:new(spawn_pos, end_pos, 1, 5)
+			self.isChargingLaser = true
 
-			player.laser = laser
-			player.laserOn = true
 		end
 	end
 
@@ -502,16 +524,28 @@ Boss = Object:new({class = "Boss"})
 
 			for i = 1, 2 do
 
+				-- predict player movement 
 				player_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+
+				-- add player velocities to be cheeky 
+				variance = (12 * math.random(0, 400) / math.sqrt(player.vel:norm()))
+
+				player_middle.x = player_middle.x + variance *((player.vel.x * dt * -player.a)
+												  + (player.vel.x * dt * player.d))
+
+				player_middle.y = player_middle.y + variance *((player.vel.y * dt * -player.w)
+												  + (player.vel.y * dt * player.s))
+
 				gun_to_player = (player_middle - points[i])
 				gun_to_player = (gun_to_player * (1 / gun_to_player:norm()))
 
-				velocity = gun_to_player * 300
+				velocity = gun_to_player * 400
 				velocity.y = -1 * velocity.y
 
 				bullet = Bullet:new(points[i], velocity, 10, 10)
 				table.insert(shmupgame.enemyBullets, bullet)
 
+				print("player pos: " .. tostring(player.pos) .. " player middle: " .. tostring(player_middle))
 			end
 
 			self.fireDelay = self.fireRate
@@ -607,10 +641,10 @@ Laser = Object:new({class = "Laser"})
 			spawn_pos = spawn_pos or Vector:new(0, 0), 
 			end_pos = end_pos or Vector:new(0, 0),
 			damage = damage or 0,
-			angle = 0, goal_angle = 0, rot_vel = math.pi / 1200
+			angle = 0, goal_angle = 0, rot_vel = math.pi / 2500
 		})
 
-		-- find angle from x axis
+		-- find angle
 		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
 
 		vec_A = end_pos - ship_middle
