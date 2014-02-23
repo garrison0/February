@@ -61,7 +61,8 @@ function love.update(dt)
 		if (detect(start_button, click)) then
 			shmupgame.stateNotLoaded = true
 			shmupgame.state = "level1"
-			wave3_On = true
+			test_wave = true
+			--wave1_On = true
 			start_button = nil
 		end
 
@@ -72,7 +73,7 @@ function love.update(dt)
 
 		-- load pre-level stuff
 		player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
-		player.bulletLevel = 3
+		player.bulletLevel = 1
 
 		powerups = {}
 		enemies = {}
@@ -99,7 +100,7 @@ function love.update(dt)
 				x_iter = i * 125
 				pos = Vector:new(x_iter, -100)
 				targetPos = Vector:new(pos.x, pos.y + 200)
-				turret = Turret:new(pos, targetPos, 50, 100, 1, 100, 32, 32)
+				turret = Turret:new(pos, targetPos, 50, .4, 1, 100, 32, 32)
 				table.insert(enemies, turret)
 
 			end
@@ -233,7 +234,7 @@ function love.update(dt)
 		if wave3_On == true and shmupgame.stateNotLoaded == true then
 
 			-- spawn boss
-			boss = Boss:new(Vector:new(50, 50), Vector:new(50,0), 600, 200, 2500, .1)
+			boss = Boss:new(Vector:new(50, 50), Vector:new(50,0), 600, 200, 3000, .1)
 
 			shmupgame.stateNotLoaded = false
 
@@ -260,6 +261,24 @@ function love.update(dt)
 			start_button = MenuButton:new("START GAME. YOU WON, BTW.", Vector:new(100, 200), 400, 100)
 			shmupgame.state = "menu"
 			boss_dead = false
+
+		end
+
+		-- to test things
+		if test_wave == true and shmupgame.stateNotLoaded == true then
+
+			-- spawn a few seeking enemies
+			for i = 1,7 do
+
+				arriver = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(-200, 50),
+										   8, 300, 10, "arrival", Vector:new(400, 400))
+				flee = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(-200, 50),
+										   8, 300, 10, "flee", Vector:new(400, 400))
+				table.insert(enemies, arriver)
+				table.insert(enemies, flee)
+			
+			end
+			shmupgame.stateNotLoaded = false
 
 		end
 
@@ -374,18 +393,22 @@ function love.update(dt)
 
 			v:update(dt)
 
-			if v.life <= 0 then
+			if v.life ~= nil then
+				if v.life <= 0 then
 
-				table.remove(enemies, i)
+					table.remove(enemies, i)
 
+				end
 			end
 
-			if v.health <= 0 then
-				if(math.random(1, 20) == 1) then
-					powerup = PowerUp:new(v.pos, 25)
-					table.insert(powerups, powerup)
+			if v.health ~= nil then
+				if v.health <= 0 then
+					if(math.random(1, 20) == 1) then
+						powerup = PowerUp:new(v.pos, 25)
+						table.insert(powerups, powerup)
+					end
+					table.remove(enemies, i)
 				end
-				table.remove(enemies, i)
 			end
 
 			-- collide against player

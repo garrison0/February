@@ -95,6 +95,10 @@ function Vector:angle()
 	return math.atan2(self.y,self.x)
 end
 
+function Vector:normalize()
+	return self * (1 / self:norm())
+end
+
 function Vector:rotate(theta)
 	return Vector:new(self.x*math.cos(theta) - self.y*math.sin(theta),
 					  self.x*math.sin(theta) + self.y*math.cos(theta))
@@ -156,4 +160,7 @@ function Test_Vector()
 	if pcall(function () local c = Vector:new(); c.z = 1; end) then
 		assert(false)
 	end
+
+	c = one:normalize()
+	assert(c == Vector:new(1 / math.sqrt(2), 1 / math.sqrt(2)))
 end

@@ -242,7 +242,7 @@ Player = Object:new({class = "Player"})
 			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
 										   Vector:new(0,1000), 1, 10)
 
-			player.fire_delay = .3
+			player.fire_delay = .2
 			table.insert(player.bullets, bullet)
 		end
 
@@ -392,6 +392,114 @@ Enemy = Object:new({class = "Enemy"})
 
 	end
 
+-- for info: http://www.red3d.com/cwr/steer/gdc99/
+SteeringEnemy = Object:new({class = "SteeringEnemy"})
+
+	function SteeringEnemy:new(mass, radius, pos, vel, max_force, max_speed, orientation, behaviorType, target)
+			
+		enemy = Object:new({mass = mass, pos = pos, vel = vel, max_force = max_force,
+							radius = radius, max_speed = max_speed, orientation = orientation,
+							behaviorType = behaviorType or "seek", target = target or Vector:new(400, 400)})
+		self.__index = self
+		setmetatable(enemy, self)
+		return enemy
+
+	end
+
+	function SteeringEnemy:update(dt)
+
+		-- determine steering force
+		-- fixed target point
+		if self.behaviorType == "seek" then
+
+			desired_velocity = (self.target - self.pos):normalize() * self.max_speed
+			self.steering = desired_velocity - self.vel
+
+		end
+
+		if self.behaviorType == "flee" then
+
+			desired_velocity = (self.pos - self.target):normalize() * self.max_speed
+			self.steering = desired_velocity - self.vel
+
+		end
+
+		-- NOTE: these two assume you pass in a target object, not a position.
+		-- dynamic target; entity
+		if self.behaviorType == "pursuit" then
+
+			target_pos = self.target.pos
+			desired_velocity = (target_pos - self.pos):normalize() * self.max_speed
+			self.steering = desired_velocity - self.vel
+
+		end
+
+		if self.behaviorType == "evade" then
+
+			target_pos = self.target.pos
+			desired_velocity = (self.pos - target_pos):normalize() * self.max_speed
+			self.steering = desired_velocity - self.vel
+
+		end
+
+		-- fixed target
+		if self.behaviorType == "arrival" then
+
+			offset = self.target - self.pos
+			distance = offset:norm()
+			slowing_distance = 110
+			ramped_speed = self.max_speed * (distance / slowing_distance)
+			clipped_speed = math.min(ramped_speed, self.max_speed)
+			desired_velocity = (clipped_speed / distance) * offset
+			self.steering = desired_velocity - self.vel
+
+		end
+
+		-- truncate the steering force by max force
+		if self.steering:norm() > self.max_force then
+			self.steering = self.steering:normalize() * self.max_force
+		end
+
+		-- determine acceleration
+		self.acc = self.steering * (1 / self.mass)
+
+		-- truncate velocity by max speed
+		velocity = self.vel + self.acc
+
+		if self.steering:norm() > self.max_speed then
+			self.vel = velocity:normalize() * self.max_speed
+		else
+			self.vel = velocity
+		end
+
+		-- update position
+		self.pos = self.pos + self.vel * dt
+
+	end
+
+	function SteeringEnemy:collision()
+
+		return BoundingAggregate:new({BoundingSphere:new(self.pos, self.radius)})
+
+	end
+
+	function SteeringEnemy:draw()
+
+		love.graphics.circle("line", self.pos.x, self.pos.y, self.radius, 100)
+
+		-- draw the target
+		if self.target.class == "Vector" then
+			love.graphics.circle("fill", self.target.x, self.target.y, 5, 100)
+		else
+			love.graphics.circle("fill", self.target.pos.x, self.target.pos.y, 5, 100)
+		end
+		-- draw the velocity vec
+		love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.vel.x / 5, self.pos.y + self.vel.y / 5)
+		-- draw steering force
+		love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.steering.x * 10, self.pos.y + self.steering.y * 10)
+
+	end
+
 Turret = Object:new({class = "Turret"})
 
 	function Turret:new(pos, targetPos, velScalar, fireDelay, bulletLevel, health, width, height)
@@ -494,7 +602,8 @@ Boss = Object:new({class = "Boss"})
 		local boss = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			health = health or 0, width = width or 0, height = height or 0,
-			fireRate = fireDelay or .5, fireDelay = fireDelay or .5
+			fireRate = fireDelay or .5, fireDelay = fireDelay or .5,
+			phase = 1
 		})
 		setmetatable(boss, self)
 		self.__index = self
@@ -524,7 +633,6 @@ Boss = Object:new({class = "Boss"})
 
 			for i = 1, 2 do
 
-				-- predict player movement 
 				player_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
 
 				-- add player velocities to be cheeky 
@@ -545,7 +653,6 @@ Boss = Object:new({class = "Boss"})
 				bullet = Bullet:new(points[i], velocity, 10, 10)
 				table.insert(shmupgame.enemyBullets, bullet)
 
-				print("player pos: " .. tostring(player.pos) .. " player middle: " .. tostring(player_middle))
 			end
 
 			self.fireDelay = self.fireRate
@@ -812,7 +919,7 @@ PowerUp = Object:new({class = "PowerUp"})
 		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
 		local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
 		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p4.x, p4.y, p3.x, p3.y)
-
+		love.graphics.print("P", p1.x + self.width/3, p1.y + self.height/3)
 	end
 
 	function PowerUp:update(dt)

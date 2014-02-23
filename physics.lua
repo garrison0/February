@@ -35,18 +35,18 @@ function detect(a, b)
 
 			for j,k in ipairs(b_bodies) do
 
-					-- check for collisions
-					if(k.class == "BoundingSphere") then
-						if CirclevsTriangle(k, v) then
-							return true
-						end
+				-- check for collisions
+				if(k.class == "BoundingSphere") then
+					if CirclevsTriangle(k, v) then
+						return true
 					end
+				end
 
-					if(k.class == "BoundingTriangle") then
-						if TrianglevsTriangle(v, k) then
-							return true
-						end
+				if(k.class == "BoundingTriangle") then
+					if TrianglevsTriangle(v, k) then
+						return true
 					end
+				end
 			end
 		
 		else
