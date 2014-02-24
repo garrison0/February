@@ -402,6 +402,7 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 							behaviorType = behaviorType or "seek", target = target or Vector:new(400, 400)})
 		self.__index = self
 		setmetatable(enemy, self)
+		if behaviorType == "wandering" then enemy.initializeSteering = true end
 		return enemy
 
 	end
@@ -539,9 +540,24 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 
 		end
 
+		-- random steering
 		if self.behaviorType == "wandering" then
 
-
+			-- steering movement is constrained to the perimeter of a circle 
+			-- in front of the vehicle
+			circleRadius = 75
+			velNorm = self.vel:normalize()
+			circleCenter = self.pos + velNorm * 25 + velNorm * circleRadius
+			maximumOffset = math.pi / 1000
+			if self.initializeSteering == true then
+				self.posOnCircle = Vector:new(circleRadius, 0)
+				self.initializeSteering = false
+			else
+				offset = math.random(-maximumOffset, maximumOffset)
+				self.posOnCircle = self.posOnCircle:rotate(offset)
+			end
+			posInWorld = circleCenter + self.posOnCircle
+			self.steering = posInWorld - self.pos
 
 		end
 
@@ -586,16 +602,24 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 		p3 = backEnd - velPerp * 16
 		love.graphics.polygon("line", self.pos.x, self.pos.y, p2.x, p2.y, p3.x, p3.y)
 
+		-- if self.behaviorType == "wandering" then
+		-- 	-- draw circle
+		-- 	circleCenter = p1 + velNorm * 25 + velNorm * circleRadius
+		-- 	love.graphics.circle("line", circleCenter.x, circleCenter.y, circleRadius)
+		-- 	-- draw position on the circle
+		-- 	love.graphics.circle("fill", posInWorld.x, posInWorld.y, 5)
+		-- end
 		-- draw the target
 		--if self.target.class == "Vector" then
 		--	love.graphics.circle("fill", self.target.x, self.target.y, 5, 100)
 		--else
 		--	love.graphics.circle("fill", self.target.pos.x, self.target.pos.y, 5, 100)
 		--end
-		-- draw the velocity vec
+		
+		--draw the velocity vec
 		--love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.vel.x / 5, self.pos.y + self.vel.y / 5)
 		-- -- draw steering force
-		-- love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.steering.x * 10, self.pos.y + self.steering.y * 10)
+		--love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.steering.x * 10, self.pos.y + self.steering.y * 10)
 
 	end
 
