@@ -408,6 +408,10 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 
 	function SteeringEnemy:update(dt)
 
+		-- keep it on screen
+		self.pos.x = self.pos.x % shmupgame.width
+		self.pos.y = self.pos.y % shmupgame.height
+
 		-- determine steering force
 		-- fixed target point
 		if self.behaviorType == "seek" then
@@ -455,6 +459,92 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 
 		end
 
+		-- no target
+		if self.behaviorType == "flock" then
+
+			-- find members of a local neighborhood
+			self.neighbors = {}
+			neighborhood_distance = 100
+			for i, v in ipairs(enemies) do
+
+				distance_between = (v.pos - self.pos):norm()
+				if distance_between <= neighborhood_distance then
+
+					table.insert(self.neighbors, v)
+
+				end
+			end
+
+			--[[ 
+				seperation behavior: maintain a distance apart from others
+						1. find the distance between each object in the neighborhood
+						2. normalize and weigh it by 1 / r
+						3. sum together all of the repulsive forces
+						4. the steering force = the sum of all repulsive forces
+			]]
+			seperation_steering = 0
+			for i, v in ipairs(self.neighbors) do
+
+				repulsive_force = self.pos - v.pos
+				distance = repulsive_force:norm()
+				repulsive_force = repulsive_force:normalize()
+
+				-- account for divide by zero error
+				if distance == 0 then distance = .001 end
+
+				repulsive_force = repulsive_force * (1 / distance)^2
+				seperation_steering = seperation_steering + repulsive_force
+
+			end
+
+			--[[ 
+				cohesion behavior: keep the flock together
+						1. find average position in the neighborhood
+						2. steer in the direction of that position
+			]]
+			total_position = Vector:new(0,0)
+			count = 0
+			for i, v in ipairs(self.neighbors) do
+
+				count = count + 1
+				total_position = total_position + v.pos
+
+			end
+			-- "gravity center" of the neighborhood
+			average_position = total_position * (1 / count)
+			cohesion_steering = self.pos - average_position
+
+			--[[ 
+				alignment behavior: steer the flock in the same direction
+						1. find average (desired) velocity 
+						2. steering in the diection of that velocity
+			]]
+			total_velocity = 0
+			count = 0 
+			for i, v in ipairs(self.neighbors) do
+
+				count = count + 1
+				total_velocity = total_velocity + v.vel
+
+			end
+			desired_velocity = total_velocity * (1 / count)
+			alignment_steering = desired_velocity - self.vel
+
+			-- normalize three behaviors, scale by weighting factors, then combine.
+			alignment_steering = alignment_steering:normalize()
+			seperation_steering = seperation_steering:normalize()
+			cohesion_steering = cohesion_steering:normalize()
+
+			self.steering = 40*(.5 * alignment_steering + .1 * seperation_steering + .4 * cohesion_steering)
+
+		end
+
+		if self.behaviorType == "wandering" then
+
+
+
+		end
+
 		-- truncate the steering force by max force
 		if self.steering:norm() > self.max_force then
 			self.steering = self.steering:normalize() * self.max_force
@@ -464,39 +554,48 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 		self.acc = self.steering * (1 / self.mass)
 
 		-- truncate velocity by max speed
-		velocity = self.vel + self.acc
+		self.vel = self.vel + self.acc
+		self.vel = self.vel * 1.001
 
-		if self.steering:norm() > self.max_speed then
-			self.vel = velocity:normalize() * self.max_speed
-		else
-			self.vel = velocity
+		if self.vel:norm() > self.max_speed then
+			self.vel = self.vel:normalize() * self.max_speed
 		end
 
 		-- update position
 		self.pos = self.pos + self.vel * dt
 
+		-- update orientation (which way is it facing?)
+		self.orientation = self.vel:angle()
+
 	end
 
 	function SteeringEnemy:collision()
 
-		return BoundingAggregate:new({BoundingSphere:new(self.pos, self.radius)})
+		--return BoundingAggregate:new({BoundingSphere:new(self.pos, self.radius)})
+		return BoundingAggregate:new({})
 
 	end
 
 	function SteeringEnemy:draw()
 
-		love.graphics.circle("line", self.pos.x, self.pos.y, self.radius, 100)
+		p1 = self.pos
+		velNorm = self.vel:normalize() 
+		velPerp = velNorm:rotate(math.pi / 2)
+		backEnd = (p1 - velNorm * 32)
+		p2 = backEnd + velPerp * 16
+		p3 = backEnd - velPerp * 16
+		love.graphics.polygon("line", self.pos.x, self.pos.y, p2.x, p2.y, p3.x, p3.y)
 
 		-- draw the target
-		if self.target.class == "Vector" then
-			love.graphics.circle("fill", self.target.x, self.target.y, 5, 100)
-		else
-			love.graphics.circle("fill", self.target.pos.x, self.target.pos.y, 5, 100)
-		end
+		--if self.target.class == "Vector" then
+		--	love.graphics.circle("fill", self.target.x, self.target.y, 5, 100)
+		--else
+		--	love.graphics.circle("fill", self.target.pos.x, self.target.pos.y, 5, 100)
+		--end
 		-- draw the velocity vec
-		love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.vel.x / 5, self.pos.y + self.vel.y / 5)
-		-- draw steering force
-		love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.steering.x * 10, self.pos.y + self.steering.y * 10)
+		--love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.vel.x / 5, self.pos.y + self.vel.y / 5)
+		-- -- draw steering force
+		-- love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.steering.x * 10, self.pos.y + self.steering.y * 10)
 
 	end
 

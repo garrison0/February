@@ -268,14 +268,15 @@ function love.update(dt)
 		if test_wave == true and shmupgame.stateNotLoaded == true then
 
 			-- spawn a few seeking enemies
-			for i = 1,7 do
+			for i = 1, 15 do
 
-				arriver = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(-200, 50),
-										   8, 300, 10, "arrival", Vector:new(400, 400))
-				flee = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(-200, 50),
-										   8, 300, 10, "flee", Vector:new(400, 400))
-				table.insert(enemies, arriver)
-				table.insert(enemies, flee)
+				flocker = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
+										   3, 700, 0, "flock")
+				--evader = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(-200, 50),
+				--		   				     8, 400, 10, "evade", pursuer)
+				--pursuer.target = evader
+				table.insert(enemies, flocker)
+				--table.insert(enemies, evader)
 			
 			end
 			shmupgame.stateNotLoaded = false

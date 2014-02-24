@@ -96,7 +96,11 @@ function Vector:angle()
 end
 
 function Vector:normalize()
-	return self * (1 / self:norm())
+	if self == Vector:new(0, 0) then
+		return Vector:new(0, 0)
+	else
+		return self * (1 / self:norm())
+	end
 end
 
 function Vector:rotate(theta)
