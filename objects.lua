@@ -299,7 +299,7 @@ SpringBall = Object:new({class = "SpringBall"})
 		spring = Object:new({pos = pos,
 							 equilibriumPos = equilibriumPos or pos,
 							 vel = Vector:new(0, 0), acc = Vector:new(0, 0),
-							 k = k or .18})
+							 k = k or .25})
 		setmetatable(spring, self)
 		self.__index = self
 		return spring

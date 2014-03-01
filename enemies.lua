@@ -554,7 +554,7 @@ BossTwo = Object:new({class = "BossTwo"})
 		
 		local boss = Object:new({
 			rotCenter = rotCenter or Vector:new(0,0), vel = vel or Vector:new(0,0),
-			radius = radius or 0, rotVel = rotVel or 1, rotAcc = rotAcc or 1,
+			radius = radius or 0, rotVel = rotVel or 10, rotAcc = rotAcc or 1,
 			fireRate = fireDelay or .5, fireDelay = fireDelay or .5,
 			health = health or 5, angle = angle or 0,
 		})
@@ -562,7 +562,7 @@ BossTwo = Object:new({class = "BossTwo"})
 		ballEnd = (Vector:new(1, 0)):rotate(angle)
 		ballEnd = ballEnd * radius
 		ballEnd = ballEnd + rotCenter
-		boss.springBall = SpringBall:new(ballEnd)
+		boss.springBall = SpringBall:new(ballEnd, ballEnd, .1)
 
 		setmetatable(boss, self)
 		self.__index = self
@@ -586,11 +586,8 @@ BossTwo = Object:new({class = "BossTwo"})
 			self.vel.y = self.vel.y * -1
 		end
 
-		if self.rotVel > 3 * math.pi then
-			self.rotAcc = -1
-		elseif self.rotVel < -3 * math.pi then
-			self.rotAcc = 1
-		end
+		-- spring-like wind-up for the arm (F = -k * x)
+		self.rotAcc =  - .4 * self.angle
 
 		self.rotCenter = self.rotCenter + self.vel * dt
 		self.rotVel = self.rotVel + self.rotAcc * dt
@@ -603,6 +600,14 @@ BossTwo = Object:new({class = "BossTwo"})
 		self.springBall.equilibriumPos = ballEnd
 		self.springBall:update(dt)
 
+		-- truncate the velocity
+		velocity = (self.springBall.vel):norm()
+		maxVel = 3500
+		if velocity > maxVel then
+			direction = (self.springBall.vel):normalize()
+			newVel = direction * maxVel
+			self.springBall.vel = newVel
+		end
 	end
 
 	function BossTwo:draw()
