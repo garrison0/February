@@ -1,5 +1,4 @@
 require "utility"
-require "objects"
 
 --[[
 	general -- detect whether or not two tables, a and b, collide
@@ -54,6 +53,77 @@ function detect(a, b)
 		end
 	end
 end
+
+--[[
+	-- Physical Objects
+--]]
+
+BoundingAggregate = Object:new({class = "BoundingAggregate"})
+
+	function BoundingAggregate:new(aggregate)
+		local boundingAggregate = Object:new(aggregate or {})
+		setmetatable(aggregate, self)
+		self.__index = self
+		return boundingAggregate
+	end
+
+BoundingSphere = Object:new({class = "BoundingSphere"})
+
+	function BoundingSphere:new(center, radius)
+		local sphere = Object:new({center = center or Vector:new(0,0),
+								   radius = radius or 0})
+		setmetatable(sphere,self)
+		self.__index = self
+		return sphere
+	end
+
+	--[[ translation
+		x must be either a BoundingSphere, Vector, or number
+		y must be either a BoundingSphere, Vector, or number
+		one and only one of x and y must be a BoundingSphere
+	--]]
+	function BoundingSphere.__add(x, y)
+		local x_isSphere = x.class == "BoundingSphere"
+		local y_isSphere = y.class == "BoundingSphere"
+		if x_isSphere and y_isSphere then
+		elseif x_isSphere then
+			local v = Vector:new(0,0)
+			v = v + y
+			return BoundingSphere:new(x.center + v, x.radius)
+		elseif y_isSphere then
+			local v = Vector:new(0,0)
+			v = v + x
+			return BoundingSphere:new(y.center + v, y.radius)
+		end
+	end
+
+	function BoundingSphere.__sub(x, y)
+		local x_isSphere = x.class == "BoundingSphere"
+		local y_isSphere = y.class == "BoundingSphere"
+		if x_isSphere and y_isSphere then
+		elseif x_isSphere then
+			local v = Vector:new(0,0)
+			v = v + y
+			return BoundingSphere:new(x.center - v, x.radius)
+		elseif y_isSphere then
+			local v = Vector:new(0,0)
+			v = v + x
+			return BoundingSphere:new(y.center - v, y.radius)
+		end
+	end
+
+BoundingTriangle = Object:new({class = "BoundingTriangle"})
+	
+	function BoundingTriangle:new(p1, p2, p3)
+		local triangle = Object:new({p1 = p1 or Vector:new(0,0),
+									p2 = p2 or Vector:new(0,0),
+									p3 = p3 or Vector:new(0,0)})
+		setmetatable(triangle, self)
+		self.__index = self
+		return triangle
+	end
+
+	-- TO DO: translation functions
 
 --[[
 	-- Helper Functions
@@ -175,6 +245,7 @@ end
 	-- Collision Tests
 --]]
 
+-- a_sphere, b_sphere : BoundingSphere, BoundingSphere
 function CirclevsCircle(a_sphere, b_sphere)
 
 	local dist = (a_sphere.center - b_sphere.center):norm()
@@ -225,6 +296,7 @@ function TrianglevsTriangle(T1, T2)
 		then return true
 	end
 
+	-- otherwise
 	return false
 end
 

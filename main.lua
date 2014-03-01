@@ -2,6 +2,9 @@ require "object"
 require "utility"
 require "objects"
 require "physics"
+require "player"
+require "enemies"
+
 
 --[[
 TO DO:
@@ -62,7 +65,7 @@ function love.update(dt)
 			shmupgame.stateNotLoaded = true
 			shmupgame.state = "level1"
 			test_wave = true
-			--wave1_On = true
+			--wave3_On = true
 			start_button = nil
 		end
 
@@ -234,7 +237,7 @@ function love.update(dt)
 		if wave3_On == true and shmupgame.stateNotLoaded == true then
 
 			-- spawn boss
-			boss = Boss:new(Vector:new(50, 50), Vector:new(50,0), 600, 200, 3000, .1)
+			boss = Boss:new(Vector:new(25, 25), Vector:new(50,0), 600, 150, 2500, .05)
 
 			shmupgame.stateNotLoaded = false
 
@@ -268,18 +271,21 @@ function love.update(dt)
 		if test_wave == true and shmupgame.stateNotLoaded == true then
 
 			-- spawn a few seeking enemies
-			for i = 1, 10 do
+			-- for i = 1, 10 do
 
-				if i % 5 == 0 then 
-					wanderer = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
-										   4, 500, 0, "wandering")
-					table.insert(enemies, wanderer)
-				end
-				flocker = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
-										   4, 400, 0, "flock")
-				table.insert(enemies, flocker)
+			-- 	if i % 10 == 0 then 
+			-- 		-- this guy goes "fuck the poliss" and makes it interesting
+			-- 		wanderer = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
+			-- 							   4, 500, 0, "wandering")
+			-- 		table.insert(enemies, wanderer)
+			-- 	end
+			-- 	flocker = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
+			-- 							   4, 400, 0, "flock")
+			-- 	table.insert(enemies, flocker)
 
-			end
+			-- end
+			bossTwo = BossTwo:new(Vector:new(400, 250), 200, 0, Vector:new(150, 150))
+			table.insert(enemies, bossTwo)
 			shmupgame.stateNotLoaded = false
 
 		end
