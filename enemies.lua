@@ -274,6 +274,47 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 
 		end
 
+		-- avoid spherical obstacles
+		if self.behaviorType == "obstacleAvoidance" then
+
+			MAX_AHEAD = 200
+			vecAhead = self.pos + (self.vel:normalize() * MAX_AHEAD)
+			perpVec = (self.vel:normalize()):rotate(math.pi / 2)
+			leftSide = {self.pos - perpVec * 16, vecAhead - perpVec * 16}
+			rightSide = {self.pos + perpVec * 16, vecAhead + perpVec * 16}
+			obstaclesInLine = {}
+			for i, v in ipairs(obstacles) do
+
+				if CirclevsLine(v:collision(), leftSide) then
+					table.insert(obstaclesInLine, v)
+				end
+				if CirclevsLine(v:collision(), rightSide) then
+					table.insert(obstaclesInLine, v)
+				end
+
+			end
+
+			if obstaclesInLine[1] ~= nil then
+				prioritizedObstacle = obstaclesInLine[1]
+				shortestDist = (obstaclesInLine[1].pos - self.pos):norm()
+				for i, v in ipairs(obstaclesInLine) do
+
+					distance = (v.pos - self.pos):norm()
+					if distance < shortestDist then
+						shortestDist = distance
+						prioritizedObstacle = v
+					end
+
+				end
+
+				-- found primary obstacle to avoid, now find steering force.
+				steering = self.pos - prioritizedObstacle.pos
+				self.steering = (steering * perpVec) * perpVec 
+			else
+				self.steering = Vector:new(0, 0)
+			end
+		end
+
 		-- truncate the steering force by max force
 		if self.steering:norm() > self.max_force then
 			self.steering = self.steering:normalize() * self.max_force
@@ -315,6 +356,18 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 		p3 = backEnd - velPerp * 16
 		love.graphics.polygon("line", self.pos.x, self.pos.y, p2.x, p2.y, p3.x, p3.y)
 
+		if self.behaviorType == "obstacleAvoidance" then
+
+			local vecAhead = self.pos + (self.vel:normalize() * MAX_AHEAD)
+			perpVec = (self.vel:normalize()):rotate(math.pi / 2)
+			leftSide = {self.pos - perpVec * 16, vecAhead - perpVec * 16}
+			rightSide = {self.pos + perpVec * 16, vecAhead + perpVec * 16}
+			love.graphics.line(leftSide[2].x, leftSide[2].y, rightSide[2].x, rightSide[2].y)
+			love.graphics.line(leftSide[1].x, leftSide[1].y, leftSide[2].x, leftSide[2].y)
+			love.graphics.line(rightSide[1].x, rightSide[1].y, rightSide[2].x, rightSide[2].y)
+
+		end
+
 		-- if self.behaviorType == "wandering" then
 		-- 	-- draw circle
 		-- 	circleCenter = p1 + velNorm * 25 + velNorm * circleRadius
@@ -329,10 +382,10 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 		--	love.graphics.circle("fill", self.target.pos.x, self.target.pos.y, 5, 100)
 		--end
 		
-		--draw the velocity vec
-		--love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.vel.x / 5, self.pos.y + self.vel.y / 5)
-		-- -- draw steering force
-		--love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.steering.x * 10, self.pos.y + self.steering.y * 10)
+		-- draw the velocity vec
+		love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.vel.x / 5, self.pos.y + self.vel.y / 5)
+		-- draw steering force
+		love.graphics.line(self.pos.x, self.pos.y, self.pos.x + self.steering.x * 10, self.pos.y + self.steering.y * 10)
 
 	end
 
@@ -550,10 +603,10 @@ Boss = Object:new({class = "Boss"})
 -- TO BE DETERMINED.. Springy/Rotationy Thing
 BossTwo = Object:new({class = "BossTwo"})
 
-	function BossTwo:new(rotCenter, radius, angle, vel, rotVel, rotAcc, health, fireDelay)
+	function BossTwo:new(pos, radius, angle, vel, rotVel, rotAcc, health, fireDelay)
 		
 		local boss = Object:new({
-			rotCenter = rotCenter or Vector:new(0,0), vel = vel or Vector:new(0,0),
+			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			radius = radius or 0, rotVel = rotVel or 10, rotAcc = rotAcc or 1,
 			fireRate = fireDelay or .5, fireDelay = fireDelay or .5,
 			health = health or 5, angle = angle or 0,
@@ -561,7 +614,7 @@ BossTwo = Object:new({class = "BossTwo"})
 
 		ballEnd = (Vector:new(1, 0)):rotate(angle)
 		ballEnd = ballEnd * radius
-		ballEnd = ballEnd + rotCenter
+		ballEnd = ballEnd + pos
 		boss.springBall = SpringBall:new(ballEnd, ballEnd, .1)
 
 		setmetatable(boss, self)
@@ -573,30 +626,37 @@ BossTwo = Object:new({class = "BossTwo"})
 	function BossTwo:update(dt)
 
 		-- keep it on screen
-		if self.rotCenter.x + 25 >= shmupgame.width then
+		if self.pos.x + 25 >= shmupgame.width then
 			self.vel.x = self.vel.x * -1
+			self.pos.x = shmupgame.width - 25
 		end
-		if self.rotCenter.x - 25 <= 0 then
+		if self.pos.x - 25 <= 0 then
 			self.vel.x = self.vel.x * -1
+			self.pos.x = 25
 		end
-		if self.rotCenter.y + 25 >= shmupgame.height then
+		if self.pos.y + 25 >= shmupgame.height then
+			self.pos.y = shmupgame.height - 25
 			self.vel.y = self.vel.y * -1
 		end
-		if self.rotCenter.y - 25 <= 0 then
+		if self.pos.y - 25 <= 0 then
 			self.vel.y = self.vel.y * -1
+			self.pos.y = 25
 		end
+
+		-- determine where to steer avoiding both the player and the wall
 
 		-- spring-like wind-up for the arm (F = -k * x)
 		self.rotAcc =  - .4 * self.angle
 
-		self.rotCenter = self.rotCenter + self.vel * dt
+		-- update body, arm
+		self.pos = self.pos + self.vel * dt
 		self.rotVel = self.rotVel + self.rotAcc * dt
 		self.angle = self.angle + self.rotVel * dt
 		
 		-- update tether ball-like thing
 		ballEnd = (Vector:new(1, 0)):rotate(self.angle)
 		ballEnd = ballEnd * self.radius
-		ballEnd = ballEnd + self.rotCenter
+		ballEnd = ballEnd + self.pos
 		self.springBall.equilibriumPos = ballEnd
 		self.springBall:update(dt)
 
@@ -613,13 +673,13 @@ BossTwo = Object:new({class = "BossTwo"})
 	function BossTwo:draw()
 
 		-- draw rotational center
-		love.graphics.circle("fill", self.rotCenter.x, self.rotCenter.y, 25)
+		love.graphics.circle("fill", self.pos.x, self.pos.y, 25)
 
 		-- draw line to ball
 		ballEnd = (Vector:new(1, 0)):rotate(self.angle)
 		ballEnd = ballEnd * self.radius
-		ballEnd = ballEnd + self.rotCenter
-		love.graphics.line(self.rotCenter.x, self.rotCenter.y, ballEnd.x, ballEnd.y)
+		ballEnd = ballEnd + self.pos
+		love.graphics.line(self.pos.x, self.pos.y, ballEnd.x, ballEnd.y)
 
 		-- draw the ball on the end
 		love.graphics.circle("line", ballEnd.x, ballEnd.y, 5)
