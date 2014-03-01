@@ -168,3 +168,10 @@ function Test_Vector()
 	c = one:normalize()
 	assert(c == Vector:new(1 / math.sqrt(2), 1 / math.sqrt(2)))
 end
+
+function inTable(table, item)
+	for k, v in pairs(table) do
+		if v == item then return true end
+	end
+	return false
+end

@@ -78,6 +78,8 @@ function love.update(dt)
 		player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
 		player.bulletLevel = 1
 
+		-- obstacles is for testing
+		obstacles = {}
 		powerups = {}
 		enemies = {}
 		shmupgame.enemyBullets = {}
@@ -284,8 +286,37 @@ function love.update(dt)
 			-- 	table.insert(enemies, flocker)
 
 			-- end
-			bossTwo = BossTwo:new(Vector:new(400, 250), 200, 0, Vector:new(150, 150))
-			table.insert(enemies, bossTwo)
+			-- bossTwo = BossTwo:new(Vector:new(400, 250), 200, 0, Vector:new(150, 150))
+			-- table.insert(enemies, bossTwo)
+
+			-- make some obstacles
+			obstacleOne = CircleObstacle:new(Vector:new(0, 0), 100)
+			obstacleTwo = CircleObstacle:new(Vector:new(shmupgame.width, 0), 100)
+			obstacleThree = CircleObstacle:new(Vector:new(shmupgame.width, shmupgame.height), 120)
+			obstacleFour = CircleObstacle:new(Vector:new(0, shmupgame.height), 100)
+			obstacleFive = CircleObstacle:new(Vector:new(190, 300), 100)
+			obstacleSix = CircleObstacle:new(Vector:new(500, 500), 130)
+			obstacleSeven = CircleObstacle:new(Vector:new(570, 210), 60)
+			obstacleEight = CircleObstacle:new(Vector:new(375, 100), 70)
+			obstacleNine = CircleObstacle:new(Vector:new(190, 600), 30)
+			obstacleTen = CircleObstacle:new(Vector:new(750, 220), 30)
+
+			table.insert(obstacles, obstacleOne)
+			table.insert(obstacles, obstacleTwo)
+			table.insert(obstacles, obstacleThree)
+			table.insert(obstacles, obstacleFour)
+			table.insert(obstacles, obstacleFive)
+			table.insert(obstacles, obstacleSix)
+			table.insert(obstacles, obstacleSeven)
+			table.insert(obstacles, obstacleEight)
+			table.insert(obstacles, obstacleNine)
+			table.insert(obstacles, obstacleTen)
+
+			-- the avoiding AI
+			avoider = SteeringEnemy:new(5, 10, Vector:new(600, 200), Vector:new(math.random(-200, 200), math.random(-200, 200)),
+			 							   8, 400, 0, "obstacleAvoidance")
+
+			table.insert(enemies, avoider)
 			shmupgame.stateNotLoaded = false
 
 		end
@@ -517,12 +548,10 @@ function love.draw()
 	    							   player.pos.x + 20, player.pos.y + 18, player.pos.x + 18, player.pos.y + 18, player.pos.x + 16, player.pos.y + 24,
 	    							   player.pos.x + 14, player.pos.y + 18, player.pos.x + 12, player.pos.y + 18, player.pos.x, player.pos.y + 32, player.pos.x, player.pos.y + 8})
 
-	    -- drawing the hitbox
-	 	-- local p1 = Vector:new(player.pos.x + 14, player.pos.y + 11)
-		-- local p2 = Vector:new(player.pos.x + 18, player.pos.y + 11)
-		-- local p3 = Vector:new(player.pos.x + 18, player.pos.y + 18)
-		-- local p4 = Vector:new(player.pos.x + 14, player.pos.y + 18)
-		-- love.graphics.polygon("fill", {p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y})
+	    -- draw circular obstacles (TEST)
+	    for i, v in ipairs(obstacles) do
+	    	v:draw()
+	    end
 
 	    -- draw bullets
 	    for i, v in ipairs(player.bullets) do

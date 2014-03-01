@@ -73,6 +73,29 @@ MenuButton = Object:new({class = "MenuButton"})
 
 	end
 
+CircleObstacle = Object:new({class = "CircleObstacle"})
+
+	function CircleObstacle:new(pos, radius)
+
+		local circle = Object:new({pos = pos or Vector:new(0, 0), radius = radius})
+		setmetatable(circle, self)
+		self.__index = self
+		return circle
+
+	end
+
+	function CircleObstacle:collision()
+
+		return BoundingSphere:new(self.pos, self.radius)
+
+	end
+
+	function CircleObstacle:draw()
+
+		love.graphics.circle("line", self.pos.x, self.pos.y, self.radius)
+
+	end
+
 Bullet = Object:new({class = "Bullet"})
 
 	function Bullet:new(pos, vel, life, damage)
