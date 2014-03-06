@@ -123,8 +123,8 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 	function SteeringEnemy:update(dt)
 
 		-- keep it on screen
-		self.pos.x = self.pos.x % shmupgame.width
-		self.pos.y = self.pos.y % shmupgame.height
+		self.pos.x = self.pos.x % game.width
+		self.pos.y = self.pos.y % game.height
 
 		-- determine steering force
 		-- fixed target point
@@ -433,7 +433,7 @@ Turret = Object:new({class = "Turret"})
 			if self.bulletLevel == 1 then
 
 				bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10)
-				table.insert(shmupgame.enemyBullets, bullet)
+				table.insert(game.enemyBullets, bullet)
 
 			end
 
@@ -446,7 +446,7 @@ Turret = Object:new({class = "Turret"})
 
 					velocity = velocity:rotate(math.pi / (variance + 11))
 					bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10)
-					table.insert(shmupgame.enemyBullets, bullet)
+					table.insert(game.enemyBullets, bullet)
 
 				end
 			end
@@ -506,7 +506,7 @@ Boss = Object:new({class = "Boss"})
 
 		self.pos = self.pos + self.vel * dt
 
-		if self.pos.x + self.width > shmupgame.width - 10 or self.pos.x < 10 then
+		if self.pos.x + self.width > game.width - 10 or self.pos.x < 10 then
 			self.vel.x = self.vel.x * -1
 		end
 
@@ -541,8 +541,8 @@ Boss = Object:new({class = "Boss"})
 				velocity = gun_to_player * 400
 				velocity.y = -1 * velocity.y
 
-				bullet = Bullet:new(points[i], velocity, 10, 10)
-				table.insert(shmupgame.enemyBullets, bullet)
+				bullet = Bullet:new(points[i], velocity, 10, 10, "enemy")
+				table.insert(game.entities, bullet)
 
 			end
 
@@ -626,16 +626,16 @@ BossTwo = Object:new({class = "BossTwo"})
 	function BossTwo:update(dt)
 
 		-- keep it on screen
-		if self.pos.x + 25 >= shmupgame.width then
+		if self.pos.x + 25 >= game.width then
 			self.vel.x = self.vel.x * -1
-			self.pos.x = shmupgame.width - 25
+			self.pos.x = game.width - 25
 		end
 		if self.pos.x - 25 <= 0 then
 			self.vel.x = self.vel.x * -1
 			self.pos.x = 25
 		end
-		if self.pos.y + 25 >= shmupgame.height then
-			self.pos.y = shmupgame.height - 25
+		if self.pos.y + 25 >= game.height then
+			self.pos.y = game.height - 25
 			self.vel.y = self.vel.y * -1
 		end
 		if self.pos.y - 25 <= 0 then

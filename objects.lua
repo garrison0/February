@@ -1,6 +1,8 @@
 require "object"
 require "utility"
 require "physics"
+require "enemies"
+require "player"
 
 Game = Object:new({class = "Game"})
 
@@ -8,8 +10,18 @@ Game = Object:new({class = "Game"})
 
 		love.window.setMode(width, height, {fullscreen = fullscreen or false})
 		local game = {width = width or 0, height = height or 0, 
-					stateNotLoaded = true, fullscreen = fullscreen or false}
+					 stateNotLoaded = true, triggerNotLoaded = true, 
+					 fullscreen = fullscreen or false}
+
 		game.state = initial_state or "level1"
+
+		-- entity table
+		game.entities = {}
+		-- trigger table; {name : true, name : false, str : bool}
+		game.levelTriggers = {}
+		-- level data (counting time in a trigger for periodic spawns, etc)
+		game.levelData = {}
+
 		setmetatable(game, self)
 		self.__index = self
 		return game
@@ -24,15 +36,248 @@ Game = Object:new({class = "Game"})
 
 	end
 
-	function Game:setState(state)
+	function Game:update(dt)
 
-		self.gamestate = state
+		-- keep track of mouse pos for various reasons.
+		self.mousePos = Vector:new(love.mouse.getX(), love.mouse.getY())
 
+		-- outside of level architecture 
+		if (self.state == "menu" and self.stateNotLoaded == true) then
+
+			-- remove all left-over entities
+			self.entities = {}
+
+			-- load initial menu things
+			start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
+			table.insert(self.entities, start_button)
+
+			-- set up the level triggers
+			self.levelTriggers = {}
+
+		elseif self.state == "level1" and self.stateNotLoaded == true then
+
+			-- remove left-over entities
+			self.entities = {}
+
+			-- load initial level 1 things
+			player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
+			table.insert(self.entities, player)
+
+			-- set up the level triggers
+			self.levelTriggers = {wave1 = true}
+
+		end
+
+		-- in-level architecture
+		for k, v in pairs(self.levelTriggers) do
+
+			-- trigger is on
+			if v == true then
+				if self.triggerNotLoaded == true then
+
+					-- trigger needs loaded
+					self:loadTrigger(k)
+					self.triggerNotLoaded = false
+
+				else
+
+					-- check to move on / else continue with trigger actions, etc
+					self:checkTrigger(k)
+				end
+			end
+		end
 	end
 
-	function Game:update()
+	-- loads associated entities, data
+	function Game:loadTrigger(trigger)
 
+		-- menu triggers
+		if self.state == "menu" then
 
+			-- if trigger == "optionsMenu", etc
+
+		end
+
+		-- level 1 triggers
+		if self.state == "level1" then
+			
+			if trigger == "wave1" then
+				-- spawn enemies
+				for i = 1, 7 do
+					x_iter = 95 * i
+					enemy = Enemy:new(Vector:new(x_iter, 0), Vector:new(0, 300))
+					enemy.life = 5
+					table.insert(self.entities, enemy)
+				end
+
+				-- spawn turrets
+				for i = 1, 5 do
+					x_iter = i * 125
+					pos = Vector:new(x_iter, -100)
+					targetPos = Vector:new(pos.x, pos.y + 200)
+					turret = Turret:new(pos, targetPos, 50, .4, 1, 100, 32, 32)
+					table.insert(self.entities, turret)
+				end		
+
+			end
+
+			if trigger == "wave2" then
+
+				-- spawn enemies
+				for i = 1,8 do
+					y_iter = -500 + 50 * i
+
+					enemy = Enemy:new(Vector:new(game.width / 4, y_iter), Vector:new(150, 250),
+									 "z-shape", 100, 500, "right")
+
+					table.insert(self.entities, enemy)
+				end
+
+				for i = 1,8 do
+					y_iter = -500 + 50 * i
+
+					enemy = Enemy:new(Vector:new(3 * game.width / 4, y_iter), Vector:new(150, 250),
+									 "z-shape", 100, 500, "left")
+
+					table.insert(self.entities, enemy)
+				end
+
+				for i = 1,8 do
+					y_iter = -1250 + 50 * i
+
+					if(i % 2 == 0) then
+						turningDirection = "right"
+					else
+						turningDirection = "left"
+					end
+
+					enemy = Enemy:new(Vector:new(game.width / 2, y_iter), Vector:new(100, 250), "z-shape",
+									 100, 600, turningDirection)
+
+					table.insert(self.entities, enemy)
+				end
+
+				-- mean, scarey turret
+				turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, 1, 9, 350, 100, 32)
+				table.insert(self.entities, turret)
+
+			end
+
+			if trigger == "boss" then
+
+				-- spawn boss
+				boss = Boss:new(Vector:new(25, 25), Vector:new(50,0), 600, 150, 2500, .05)
+				table.insert(self.entities, boss)
+
+			end
+		end
+	end
+
+	-- decides whether trigger conditions are complete
+	function Game:checkTrigger(trigger)
+
+		-- menu triggers
+		if self.state == "menu" then
+
+			-- barring some complicated UI, I think this works fine.
+
+		end
+
+		-- level 1 triggers
+		if self.state == "level1" then
+
+			-- "wave" triggers -- spawn enemies and wait till they're dead.
+			if string.sub(trigger, 1, 4) == "wave" then
+
+				-- condition
+				if (enemies[1] == nil) then
+
+					waveNumber = tonumber(string.sub(trigger, 5, 5))
+					if waveNumber == 2 then
+
+						self.levelTriggers["boss"] = true
+						self.levelTriggers[trigger] = false
+						self.triggerNotLoaded = true
+
+					else
+
+						waveNumber = waveNumber + 1
+						nextTrigger = "wave" .. waveNumber
+						self.levelTriggers[trigger] = false
+						self.levelTriggers[nextTrigger] = true
+						self.triggerNotLoaded = true
+						
+					end
+				end
+			end
+
+			if trigger == "boss" then
+
+				if boss == nil then
+
+					self.state = "menu"
+					self.stateNotLoaded = true
+					self.triggerNotLoaded = true
+
+				end
+			end
+		end
+	end
+
+	function Game:resolveCollision(a, b)
+
+		-- weapons vs. X
+		if(a.class == "Bullet" or a.class == "Laser") then
+
+			-- who shot it? {player, enemy}
+			if a.owner == "player" then
+				-- hit a default enemy
+				if b.class == "Enemy" then
+					-- result
+					b.health = b.health - a.damage
+
+				end
+
+				-- hit boss 1
+				if b.class == "Boss" then
+					-- result
+					b.health = b.health - a.damage
+
+				end
+			end
+
+			if a.owner == "enemy" then
+
+				-- hit the player
+				if b.class == "Player" then
+					-- mark the player to die
+				end
+
+			end
+		end
+
+		-- player vs. X
+		if(a.class == "Player") then
+
+			-- vs. boss, enemy, etc.
+			if(b.class == "Enemy") or (b.class == "Boss") then
+				-- mark player to die
+
+			end
+		end
+
+		-- menu buttons vs. the mouse (WHAT IS UI???????)
+		if(a.class == "MenuButton") then
+
+			if(b.class == "Bullet") then
+
+				-- could put up some flag, but this works.
+				self.state = "level1"
+				self.stateNotLoaded = true
+
+			end
+
+		end
 	end
 
 MenuButton = Object:new({class = "MenuButton"})
@@ -73,6 +318,12 @@ MenuButton = Object:new({class = "MenuButton"})
 
 	end
 
+	function MenuButton:update(dt)
+
+		-- NICE DESIGN FLAW MATE, IS TENOUTTATEN!
+
+	end
+
 CircleObstacle = Object:new({class = "CircleObstacle"})
 
 	function CircleObstacle:new(pos, radius)
@@ -98,11 +349,12 @@ CircleObstacle = Object:new({class = "CircleObstacle"})
 
 Bullet = Object:new({class = "Bullet"})
 
-	function Bullet:new(pos, vel, life, damage)
+	function Bullet:new(pos, vel, life, damage, owner)
 
 		local bullet = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
-			life = life or 0, damage = damage or 0, width = 4, height = 4
+			life = life or 0, damage = damage or 0, width = 4, height = 4,
+			owner = owner or "player"
 		})
 		setmetatable(bullet,self)
 		self.__index = self
@@ -128,13 +380,14 @@ Bullet = Object:new({class = "Bullet"})
 
 Laser = Object:new({class = "Laser"})
 
-	function Laser:new(spawn_pos, end_pos, damage)
+	function Laser:new(spawn_pos, end_pos, damage, owner)
 
 		local laser = Object:new({
 			spawn_pos = spawn_pos or Vector:new(0, 0), 
 			end_pos = end_pos or Vector:new(0, 0),
 			damage = damage or 0,
-			angle = 0, goal_angle = 0, rot_vel = math.pi / 2500
+			angle = 0, goal_angle = 0, rot_vel = math.pi / 2500,
+			owner = owner or "player"
 		})
 
 		-- find angle
@@ -169,7 +422,7 @@ Laser = Object:new({class = "Laser"})
 
 	end
 
-	function Laser:update(dt, mouse_pos)
+	function Laser:update(dt)
 
 		-- update position if the ship is moving
 		if player.isMovingX then

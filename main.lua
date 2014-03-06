@@ -14,16 +14,10 @@ TO DO:
 
 4. particle effects for enemy/player deaths
 	
-5. send events to the shmupgame object to handle
-		-- e.g. enemyDied(position, type)
-					-- within:
-						-- if(type == "normal") then
-								roll for item drops
-								play that animation and death sound... etc
-	basically try to stop the nonsense level-based spaghetti code that's going on.
+5. some type of event handling (observer design pattern?)
 
 6. refactor -- further divide objects into "game" and "weapons" etc.
-			-- make the shmupgame object hold the entities tables (powerups, enemies, bosses(?))
+			-- make the game object hold the entities tables (powerups, enemies, bosses(?))
 
 10. a "charger" enemy -- a bigger one that gradually moves down and shoots a set pattern
 						 -- basically a meat shield, perhaps it can have a ground tank variation that scoots around
@@ -39,8 +33,8 @@ function love.load()
 	Test_Vector()
 	Physics_Tests()
 
-	-- shmupgame
-	shmupgame = Game:new("menu", 800, 700, false)
+	-- game
+	game = Game:new("menu", 800, 700, false)
 
 	-- load menu stuff
 
@@ -56,433 +50,110 @@ end
 
 function love.update(dt)
 
-	-- main menu
-	if (shmupgame.state == "menu") then
+	-- update the game (triggers, level, etc)
+	game:update(dt)
 
-		click = Bullet:new(mouse_pressed_pos)
+	-- update entities
+	for i, v in ipairs(game.entities) do
+		--[[
+		-- single-entity based updates
+		--]]
+		v:update(dt)
 
-		if (detect(start_button, click)) then
-			shmupgame.stateNotLoaded = true
-			shmupgame.state = "level1"
-			test_wave = true
-			--wave3_On = true
-			start_button = nil
-		end
-
-	end
-
-	-- level 1
-	if (shmupgame.state == "level1") and (shmupgame.stateNotLoaded == true) then
-
-		-- load pre-level stuff
-		player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
-		player.bulletLevel = 1
-
-		-- obstacles is for testing
-		obstacles = {}
-		powerups = {}
-		enemies = {}
-		shmupgame.enemyBullets = {}
-
-	end
-
-	if shmupgame.state == "level1" then
-
-		-- the 'loading' part; don't want to load twice.
-		if wave1_On == true and shmupgame.stateNotLoaded == true then
-
-			-- spawn enemies
-			for i = 1,7 do
-				x_iter = 95 * i
-				enemy = Enemy:new(Vector:new(x_iter, 0), Vector:new(0, 300))
-				enemy.life = 5
-				table.insert(enemies, enemy)
-			end
-
-			-- spawn turrets
-			for i = 1, 5 do
-
-				x_iter = i * 125
-				pos = Vector:new(x_iter, -100)
-				targetPos = Vector:new(pos.x, pos.y + 200)
-				turret = Turret:new(pos, targetPos, 50, .4, 1, 100, 32, 32)
-				table.insert(enemies, turret)
-
-			end
-
-			-- delay for in-wave spawning
-			enemySpawnDelay = 15
-
-			shmupgame.stateNotLoaded = false
-
-		end
-
-		-- the check whether to move on or to spawn more small enemies
-		if wave1_On == true and shmupgame.stateNotLoaded == false then
-
-			if (enemies[1] == nil) then
-
-				wave1_On = false
-				wave2_On = true
-				shmupgame.stateNotLoaded = true
-
-			else
-
-				enemySpawnDelay = enemySpawnDelay - dt
-
-				if enemySpawnDelay <= 0 then
-					-- spawn enemies
-					x_iter = math.random(50, shmupgame.width - 50)
-
-					for i = 1,8 do
-						y_iter = -500 + 50 * i
-
-						if(x_iter < shmupgame.width / 2) then
-							turningDirection = "right"
-						else
-							turningDirection = "left"
-						end
-
-						enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(200, 250), "z-shape",
-										 200, 550, turningDirection)
-
-						table.insert(enemies, enemy)
-					end
-
-					enemySpawnDelay = 15
-				end
+		-- got a healthbar? is it dead? 
+		if v.health ~= nil then
+			if v.health < 0 then
+				table.remove(game.entities, i)
 			end
 		end
 
-		-- loading part
-		if wave2_On == true and shmupgame.stateNotLoaded == true then
-
-			-- spawn enemies
-			for i = 1,8 do
-				y_iter = -500 + 50 * i
-
-				enemy = Enemy:new(Vector:new(shmupgame.width / 4, y_iter), Vector:new(150, 250),
-								 "z-shape", 100, 500, "right")
-
-				table.insert(enemies, enemy)
-			end
-			for i = 1,8 do
-				y_iter = -500 + 50 * i
-
-				enemy = Enemy:new(Vector:new(3 * shmupgame.width / 4, y_iter), Vector:new(150, 250),
-								 "z-shape", 100, 500, "left")
-
-				table.insert(enemies, enemy)
-			end
-			for i = 1,8 do
-				y_iter = -1250 + 50 * i
-
-				if(i % 2 == 0) then
-					turningDirection = "right"
-				else
-					turningDirection = "left"
-				end
-
-				enemy = Enemy:new(Vector:new(shmupgame.width / 2, y_iter), Vector:new(100, 250), "z-shape",
-								 100, 600, turningDirection)
-
-				table.insert(enemies, enemy)
-			end
-			-- mean, scarey turret
-			turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, 1, 9, 350, 100, 32)
-			table.insert(enemies, turret)
-
-			shmupgame.stateNotLoaded = false
-
-		end
-
-
-		-- the check whether to move on or not. 
-		if wave2_On == true and shmupgame.stateNotLoaded == false then
-
-			if enemies[1] == nil then
-
-				wave2_On = false
-				wave3_On = true
-				shmupgame.stateNotLoaded = true
-
-			else
-
-				enemySpawnDelay = enemySpawnDelay - dt
-
-				if enemySpawnDelay <= 0 then
-					-- spawn enemies
-					x_iter = math.random(50, shmupgame.width - 50)
-
-					for i = 1,8 do
-						y_iter = -500 + 50 * i
-
-						if(x_iter < shmupgame.width / 2) then
-							turningDirection = "right"
-						else
-							turningDirection = "left"
-						end
-
-						enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(200, 250), "z-shape",
-										 200, 550, turningDirection)
-
-						table.insert(enemies, enemy)
-					end
-
-					enemySpawnDelay = 15
-				end
-
-			end
-		end
-
-		-- loading part
-		if wave3_On == true and shmupgame.stateNotLoaded == true then
-
-			-- spawn boss
-			boss = Boss:new(Vector:new(25, 25), Vector:new(50,0), 600, 150, 2500, .05)
-
-			shmupgame.stateNotLoaded = false
-
-		end
-
-
-		-- the check whether to move on or not. 
-		if wave3_On == true and shmupgame.stateNotLoaded == false then
-
-			if boss == nil then
-
-				wave3_On = false
-				boss_dead = true
-				shmupgame.stateNotLoaded = true
-
-			end
-
-		end
-
-		if boss_dead == true and shmupgame.stateNotLoaded == true then
-
-			-- CONGRATS screen + button to go back to main menu
-			mouse_pressed_pos = Vector:new(0, 0)
-			start_button = MenuButton:new("START GAME. YOU WON, BTW.", Vector:new(100, 200), 400, 100)
-			shmupgame.state = "menu"
-			boss_dead = false
-
-		end
-
-		-- to test things
-		if test_wave == true and shmupgame.stateNotLoaded == true then
-
-			-- spawn a few seeking enemies
-			-- for i = 1, 10 do
-
-			-- 	if i % 10 == 0 then 
-			-- 		-- this guy goes "fuck the poliss" and makes it interesting
-			-- 		wanderer = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
-			-- 							   4, 500, 0, "wandering")
-			-- 		table.insert(enemies, wanderer)
-			-- 	end
-			-- 	flocker = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
-			-- 							   4, 400, 0, "flock")
-			-- 	table.insert(enemies, flocker)
-
-			-- end
-			-- bossTwo = BossTwo:new(Vector:new(400, 250), 200, 0, Vector:new(150, 150))
-			-- table.insert(enemies, bossTwo)
-
-			-- make some obstacles
-			obstacleOne = CircleObstacle:new(Vector:new(0, 0), 100)
-			obstacleTwo = CircleObstacle:new(Vector:new(shmupgame.width, 0), 100)
-			obstacleThree = CircleObstacle:new(Vector:new(shmupgame.width, shmupgame.height), 120)
-			obstacleFour = CircleObstacle:new(Vector:new(0, shmupgame.height), 100)
-			obstacleFive = CircleObstacle:new(Vector:new(190, 300), 100)
-			obstacleSix = CircleObstacle:new(Vector:new(500, 500), 130)
-			obstacleSeven = CircleObstacle:new(Vector:new(570, 210), 60)
-			obstacleEight = CircleObstacle:new(Vector:new(375, 100), 70)
-			obstacleNine = CircleObstacle:new(Vector:new(190, 600), 30)
-			obstacleTen = CircleObstacle:new(Vector:new(750, 220), 30)
-
-			table.insert(obstacles, obstacleOne)
-			table.insert(obstacles, obstacleTwo)
-			table.insert(obstacles, obstacleThree)
-			table.insert(obstacles, obstacleFour)
-			table.insert(obstacles, obstacleFive)
-			table.insert(obstacles, obstacleSix)
-			table.insert(obstacles, obstacleSeven)
-			table.insert(obstacles, obstacleEight)
-			table.insert(obstacles, obstacleNine)
-			table.insert(obstacles, obstacleTen)
-
-			-- the avoiding AI
-			avoider = SteeringEnemy:new(5, 10, Vector:new(600, 200), Vector:new(math.random(-200, 200), math.random(-200, 200)),
-			 							   8, 400, 0, "obstacleAvoidance")
-
-			table.insert(enemies, avoider)
-			shmupgame.stateNotLoaded = false
-
-		end
-
-		-- update the player
-		player:update(dt)
-
-		if player.isChargingLaser then
-			
-			-- attempt to make the laser feel better
-			player.vel = Vector:new(50, 50)
-		
-		else
-			
-			player.vel = Vector:new(300, 250)
-		
-		end
-
-		-- update laser
-		if player.laserOn then
-			mouse_pos = Vector:new(love.mouse.getX(), love.mouse.getY())
-			player.laser:update(dt, mouse_pos)
-
-			-- check for oollision with enemies
-			for i, v in ipairs(enemies) do
-				if detect(v, player.laser) then
-
-					v.health = v.health - player.laser.damage
-					
-				end
-			end
-
-			-- check for collision with boss
-			if (boss ~= nil) then
-				if detect(boss, player.laser) then
-					boss.health = boss.health - player.laser.damage
-				end
-			end
-		end
-
-		-- shoot bullets
-		if (player.shooting) and player.fire_delay <= 0 then
-			player.shoot()
-		end
-
-		-- update bullets
-		for i, v in ipairs(player.bullets) do
-			v:update(dt)
-
+		-- life/time/ ran out?
+		if v.life ~= nil then
 			if v.life <= 0 then
-				table.remove(player.bullets, i)
+				table.remove(game.entities, i)
 			end
 		end
 
-		-- update enemy bullets
-		for i, v in ipairs(shmupgame.enemyBullets) do
-
-			v:update(dt)
-
-			if v.life <= 0 then
-				table.remove(shmupgame.enemyBullets, i)
-			end
-
-			-- check for collision with player
-			if detect(player, v) then
-
-				table.remove(shmupgame.enemyBullets, i)
-				-- lol back to the menu. temporary.
-				mouse_pressed_pos = Vector:new(0, 0)
-				start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
-				shmupgame.state = "menu"
-				if boss ~= nil then boss = nil end
-
+		if (v.class == "Player") then
+			if player.laserOn == true then
+				player.vel = Vector:new(50, 50)
+			else
+				player.vel = Vector:new(300, 250)
 			end
 		end
 
-		-- update boss
-		if (boss ~= nil) then 
-			boss:update(dt)
-
-			-- collide between boss and player
-			if(detect(boss, player)) then
-				-- lol back to the menu. temporary.
-				mouse_pressed_pos = Vector:new(0, 0)
-				start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
-				shmupgame.state = "menu"
-			end
-
-			if boss.health <= 0 then
-				boss = nil
-			end
-
-		end
-
-		-- update powerups
-		for i, v in ipairs(powerups) do
-			-- update
-			v:update(dt)
-
-			-- check for player collisions.
-			if detect(v, player) then
-				table.remove(powerups, i)
-
-				-- upgrade bullet level
-				if(player.bulletLevel < 3) then
-					player.bulletLevel = player.bulletLevel + 1
-				end
-			end
-		end
-
-		-- update the enemies
-		for i, v in ipairs(enemies) do
-
-			v:update(dt)
-
-			if v.life ~= nil then
-				if v.life <= 0 then
-
-					table.remove(enemies, i)
-
-				end
-			end
-
-			if v.health ~= nil then
-				if v.health <= 0 then
-					if(math.random(1, 20) == 1) then
-						powerup = PowerUp:new(v.pos, 25)
-						table.insert(powerups, powerup)
-					end
-					table.remove(enemies, i)
-				end
-			end
-
-			-- collide against player
-			if detect(v, player) then
-				-- lol back to the menu. temporary.
-				mouse_pressed_pos = Vector:new(0, 0)
-				start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
-				shmupgame.state = "menu"
-				boss = nil
-			end
-		end
-		
-		for i, v in ipairs(player.bullets) do
-			for j, k in ipairs(enemies) do
-				-- check collision between bullets and enemies
-				if detect(v,k) then
-					k.health = k.health - v.damage
-					table.remove(player.bullets, i)
-				end
-			end
-			-- bullets and boss
-			if (boss ~= nil) then
-				if detect(v, boss) then
-					table.remove(player.bullets, i)
-					boss.health = boss.health - v.damage
-				end
+		for j, k in ipairs(game.entities) do
+			--[[--
+			-- multi-enemy based updates
+			--]]
+			if detect(v, k) then
+				game:resolveCollision(v, k)
 			end
 		end
 	end
+
+	-- 	-- to test things
+	-- 	if test_wave == true and game.stateNotLoaded == true then
+
+	-- 		-- spawn a few seeking enemies
+	-- 		-- for i = 1, 10 do
+
+	-- 		-- 	if i % 10 == 0 then 
+	-- 		-- 		-- this guy goes "fuck the poliss" and makes it interesting
+	-- 		-- 		wanderer = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
+	-- 		-- 							   4, 500, 0, "wandering")
+	-- 		-- 		table.insert(enemies, wanderer)
+	-- 		-- 	end
+	-- 		-- 	flocker = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
+	-- 		-- 							   4, 400, 0, "flock")
+	-- 		-- 	table.insert(enemies, flocker)
+
+	-- 		-- end
+	-- 		bossTwo = BossTwo:new(Vector:new(400, 250), 200, 0, Vector:new(150, 150))
+	-- 		table.insert(enemies, bossTwo)
+
+	-- 		-- make some obstacles
+	-- 		-- obstacleOne = CircleObstacle:new(Vector:new(0, 0), 100)
+	-- 		-- obstacleTwo = CircleObstacle:new(Vector:new(game.width, 0), 100)
+	-- 		-- obstacleThree = CircleObstacle:new(Vector:new(game.width, game.height), 120)
+	-- 		-- obstacleFour = CircleObstacle:new(Vector:new(0, game.height), 100)
+	-- 		-- obstacleFive = CircleObstacle:new(Vector:new(215, 245), 100)
+	-- 		-- obstacleSix = CircleObstacle:new(Vector:new(500, 500), 130)
+	-- 		-- obstacleSeven = CircleObstacle:new(Vector:new(570, 210), 60)
+	-- 		-- obstacleEight = CircleObstacle:new(Vector:new(375, 100), 70)
+	-- 		-- obstacleNine = CircleObstacle:new(Vector:new(720, 495), 30)
+	-- 		-- obstacleTen = CircleObstacle:new(Vector:new(750, 220), 30)
+	-- 		-- obstacle11 = CircleObstacle:new(Vector:new(190, 480), 40)
+	-- 		-- obstacle12 = CircleObstacle:new(Vector:new(190, 590), 20)
+
+	-- 		-- table.insert(obstacles, obstacleOne)
+	-- 		-- table.insert(obstacles, obstacleTwo)
+	-- 		-- table.insert(obstacles, obstacleThree)
+	-- 		-- table.insert(obstacles, obstacleFour)
+	-- 		-- table.insert(obstacles, obstacleFive)
+	-- 		-- table.insert(obstacles, obstacleSix)
+	-- 		-- table.insert(obstacles, obstacleSeven)
+	-- 		-- table.insert(obstacles, obstacleEight)
+	-- 		-- table.insert(obstacles, obstacleNine)
+	-- 		-- table.insert(obstacles, obstacleTen)
+	-- 		-- table.insert(obstacles, obstacle11)
+	-- 		-- table.insert(obstacles, obstacle12)
+
+	-- 		-- -- the avoiding AI
+	-- 		-- avoider = SteeringEnemy:new(5, 10, Vector:new(400, 500), Vector:new(math.random(-200, 200), math.random(-200, 200)),
+	-- 		--  							   8, 400, 0, "obstacleAvoidance")
+
+	-- 		-- table.insert(enemies, avoider)
+	-- 		game.stateNotLoaded = false
+
+	-- 	end
+	--end
 end
 
 -- input
 function love.keypressed(key)
 
-	if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
+	if not(game.state == "menu") and not(game.state == "pause") then
 		player[key] = 1 -- Set key flag pressed
 		print(key .. " " .. player[key])
 	end
@@ -490,7 +161,7 @@ end
 
 function love.keyreleased(key)
 
-	if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
+	if not(game.state == "menu") and not(game.state == "pause") then
 		player[key] = 0 -- Set key flag released
 		print(key .. " " .. player[key])
 	end
@@ -498,32 +169,35 @@ end
 
 function love.mousepressed(x, y, button)
 	
-	mouse_pressed_pos = Vector:new(x, y)
-
 	if button == 'l' then
-		if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
+		if not(game.state == "menu") and not(game.state == "pause") then
 			player.shooting = true
 		end
 	end
 
 	if button == 'r' then
-		if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
-			mouse_pos = Vector:new(love.mouse.getX(), love.mouse.getY())
+		if not(game.state == "menu") and not(game.state == "pause") then
+			local mouse_pos = Vector:new(love.mouse.getX(), love.mouse.getY())
 			player:shootLaser(mouse_pos)
 		end
+		
+		-- this seems lazy, but it works.
+		game.mousePressedPos = Vector:new(x, y)
+		game.entities.click = Bullet:new(game.mousePressedPos)
+
 	end
 end
 
 function love.mousereleased(x, y, button)
 
 	if button == 'l' then
-		if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
+		if not(game.state == "menu") and not(game.state == "pause") then
 			player.shooting = false
 		end
 	end
 
 	if button == 'r' then
-		if not(shmupgame.state == "menu") and not(shmupgame.state == "pause") then
+		if not(game.state == "menu") and not(game.state == "pause") then
 			player.laserOn = false
 			player.isChargingLaser = false
 			player.currentCharge = 0
@@ -533,14 +207,14 @@ end
 
 function love.draw()
 
-	if shmupgame.state == "menu" then
+	if game.state == "menu" then
 
 		love.graphics.print("SHMUP GAEM XDDD", 100, 50)
 		start_button:draw()
 
 	end
 
-	if shmupgame.state == "level1" and shmupgame.stateNotLoaded == false then
+	if game.state == "level1" and game.stateNotLoaded == false then
 		-- draw player
 	    love.graphics.polygon("line", {player.pos.x, player.pos.y + 32, player.pos.x + 8, player.pos.y, player.pos.x + 12, player.pos.y + 10,
 	    							   player.pos.x + 14, player.pos.y + 11, player.pos.x + 16, player.pos.y + 6, player.pos.x + 18, player.pos.y + 11,
@@ -559,7 +233,7 @@ function love.draw()
 	    end
 
 	    -- draw enemy bullets
-	    for i, v in ipairs(shmupgame.enemyBullets) do
+	    for i, v in ipairs(game.enemyBullets) do
 	    	love.graphics.circle("fill", v.pos.x, v.pos.y, 4, 10)
 	    end
 
@@ -587,7 +261,7 @@ function love.draw()
 	    love.graphics.print("Lives: " .. "lol someone should put lives in", 25, 25)
 	    love.graphics.print("Laser Energy: " .. player.laserEnergy, 25, 50)
 	    love.graphics.print("Current charge: " .. player.currentCharge, 25, 75)
-	    love.graphics.print("Score: " .. tostring(1), shmupgame.width - 125, 25)
+	    love.graphics.print("Score: " .. tostring(1), game.width - 125, 25)
 	end
 
 end

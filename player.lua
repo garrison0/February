@@ -1,5 +1,4 @@
 require "object"
-require "objects"
 
 Player = Object:new({class = "Player"})
 
@@ -11,7 +10,7 @@ Player = Object:new({class = "Player"})
 			laserOn = false, laserEnergy = 100000,
 			a = 0, s = 0, d = 0, w = 0,
 			isMovingX = false, isMovingY = false,
-			isChargingLaser = false, chargeLength = 3,
+			isChargingLaser = false, chargeLength = 1.5,
 			currentCharge = 0
 		})
 		setmetatable(player,self)
@@ -35,16 +34,16 @@ Player = Object:new({class = "Player"})
 		end
 
 		-- keep it on screen
-		if self.pos.x + self.width >= shmupgame.width then
-			self.pos.x = shmupgame.width - self.width
+		if self.pos.x + self.width >= game.width then
+			self.pos.x = game.width - self.width
 			self.isMovingX = false
 		end
 		if self.pos.x <= 0 then
 			self.pos.x = 0
 			self.isMovingX = false
 		end
-		if self.pos.y + self.height >= shmupgame.height then
-			self.pos.y = shmupgame.height - self.height
+		if self.pos.y + self.height >= game.height then
+			self.pos.y = game.height - self.height
 			self.isMovingY = false
 		end
 		if self.pos.y <= 0 then
@@ -101,45 +100,36 @@ Player = Object:new({class = "Player"})
 	function Player:shoot()
 		-- level 1
 		if (player.bulletLevel == 1) then
-			bullet = Bullet:new(Vector:new(player.pos.x + player.width/2, player.pos.y), 
-										   Vector:new(0,1000), 1, 10)
+			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
+										Vector:new(0,1000), 1, 8, "player")
+
+			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
+										Vector:new(0,1000), 1, 8, "player")
 
 			player.fire_delay = .2
-			table.insert(player.bullets, bullet)
+			table.insert(game.entities, bullet)
+			table.insert(game.entities, bullet2)
 		end
 
 		-- level 2
 		if (player.bulletLevel == 2) then
 			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 8)
+										Vector:new(0,1000), 1, 8, "player")
 
 			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 8)
-
-			player.fire_delay = .2
-			table.insert(player.bullets, bullet)
-			table.insert(player.bullets, bullet2)
-		end
-
-		-- level 3
-		if (player.bulletLevel == 3) then
-			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 8)
-
-			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
-										Vector:new(0,1000), 1, 8)
+										Vector:new(0,1000), 1, 8, "player")
 
 			bullet3 = Bullet:new(Vector:new(player.pos.x + player.width, player.pos.y), 
-										Vector:new(200,800), 1, 5)
+										Vector:new(200,800), 1, 5, "player")
 
 			bullet4 = Bullet:new(Vector:new(player.pos.x, player.pos.y), 
-										Vector:new(-200,800), 1, 5)
+										Vector:new(-200,800), 1, 5, "player")
 
 			player.fire_delay = .1
-			table.insert(player.bullets, bullet)
-			table.insert(player.bullets, bullet2)
-			table.insert(player.bullets, bullet3)
-			table.insert(player.bullets, bullet4)
+			table.insert(game.entities, bullet)
+			table.insert(game.entities, bullet2)
+			table.insert(game.entities, bullet3)
+			table.insert(game.entities, bullet4)
 		end
 	end
 
