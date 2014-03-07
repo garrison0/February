@@ -42,7 +42,7 @@ Game = Object:new({class = "Game"})
 		self.mousePos = Vector:new(love.mouse.getX(), love.mouse.getY())
 
 		-- outside of level architecture 
-		if (self.state == "menu" and self.stateNotLoaded == true) then
+		if self.state == "menu" and self.stateNotLoaded == true then
 
 			-- remove all left-over entities
 			self.entities = {}
@@ -61,12 +61,21 @@ Game = Object:new({class = "Game"})
 			self.entities = {}
 
 			-- load initial level 1 things
-			player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
+			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
 			game.player = player
 			table.insert(self.entities, player)
 
 			-- set up the level triggers
 			self.levelTriggers = {wave1 = true}
+			self.stateNotLoaded = false
+
+		elseif self.state == "test" and self.stateNotLoaded == true then
+			
+			-- Test things here!
+			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
+			game.player = player
+			table.insert(self.entities, player)
+
 			self.stateNotLoaded = false
 
 		end
@@ -250,7 +259,7 @@ Game = Object:new({class = "Game"})
 	function Game:resolveCollision(a, b)
 
 		-- weapons vs. X
-		if(a.class == "Bullet" or a.class == "Laser") then
+		if(a.class == "Bullet") then
 
 			-- who shot it? {player, enemy}
 			if a.owner == "player" then
@@ -259,6 +268,7 @@ Game = Object:new({class = "Game"})
 					-- result
 					b.health = b.health - a.damage
 					a.isDead_ = true
+					
 				end
 
 				-- hit boss 1
@@ -282,6 +292,16 @@ Game = Object:new({class = "Game"})
 			end
 		end
 
+		if(a.class == "Laser") then
+
+			if b.class == "Enemy" or b.class == "Turret" or b.class == "Boss" then
+
+				b.health = b.health - a.damage
+
+			end
+
+		end
+
 		-- player vs. X
 		if(a.class == "Player") then
 
@@ -293,6 +313,27 @@ Game = Object:new({class = "Game"})
 				end
 			end
 		end
+	end
+
+	-- used to player death sounds, animations, spawn items, etc.
+	function Game:resolveDeath(entity)
+
+		if entity.class == "Enemy" then
+			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
+			smlExplosion:setPitch(2.5)
+			smlExplosion:setVolume(.5)
+			smlExplosion:play() 
+		elseif entity.class == "Turret" then
+			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
+			smlExplosion:setPitch(1.3)
+			smlExplosion:setVolume(.5)
+			smlExplosion:play() 
+		elseif entity.class == "Player" then
+
+		elseif entity.class == "Boss" then
+
+		end
+
 	end
 
 MenuButton = Object:new({class = "MenuButton"})
@@ -357,6 +398,10 @@ CircleObstacle = Object:new({class = "CircleObstacle"})
 
 	end
 
+	function CircleObstacle:update()
+
+	end
+
 Bullet = Object:new({class = "Bullet"})
 
 	function Bullet:new(pos, vel, life, damage, owner)
@@ -407,7 +452,7 @@ Laser = Object:new({class = "Laser"})
 			spawn_pos = spawn_pos or Vector:new(0, 0), 
 			length = length or 225,
 			damage = damage or 0,
-			angle = 0, goal_angle = 0, rot_vel = math.pi / 400,
+			angle = 0, goal_angle = 0, rot_vel = math.pi / 1200,
 			owner = owner or "player"
 		})
 
@@ -417,7 +462,7 @@ Laser = Object:new({class = "Laser"})
 		laser.angle = math.atan2(vec_A.y, vec_A.x)
 		if laser.angle < 0 then laser.angle = laser.angle + math.pi * 2 end
 
-		laser.end_pos = (laser.spawn_pos):normalize() * laser.length
+		laser.end_pos = ship_middle + (laser.spawn_pos):normalize() * laser.length
 
 		-- for later use
 		clockwise_angle = 0
@@ -450,14 +495,16 @@ Laser = Object:new({class = "Laser"})
 
 			self.spawn_pos.x = self.spawn_pos.x - game.player.vel.x * dt * game.player.a
 									  + game.player.vel.x * dt * game.player.d
-			self.end_pos = self.spawn_pos:normalize() * self.length
+			self.end_pos.x = self.end_pos.x + game.player.vel.x * dt * game.player.a
+									  - game.player.vel.x * dt * game.player.d
 		end
 
 		if game.player.isMovingY then
 			
 			self.spawn_pos.y = self.spawn_pos.y + game.player.vel.y * dt * game.player.s
 									  - game.player.vel.y * dt * game.player.w
-			self.end_pos = self.spawn_pos:normalize() * self.length
+			self.end_pos.y = self.end_pos.y + game.player.vel.y * dt * game.player.s
+									  - game.player.vel.y * dt * game.player.w
 
 		end
 
@@ -489,10 +536,10 @@ Laser = Object:new({class = "Laser"})
 			end
 		end
 
-		print("clck: " .. tostring(clockwise_angle) .. " cc: " .. tostring(counterclockwise_angle) .. " angle: " .. tostring(self.angle))
+		--print("clck: " .. tostring(clockwise_angle) .. " cc: " .. tostring(counterclockwise_angle) .. " angle: " .. tostring(self.angle))
 		
 		-- determine if we need to rotate
-		if self.angle < (self.goal_angle - self.rot_vel) or self.angle > (self.goal_angle + self.rot_vel) then
+		if self.angle < (self.goal_angle - 2*self.rot_vel) or self.angle > (self.goal_angle + 2*self.rot_vel) then
 
 			-- determine which angle is smallest rotate in
 			if clockwise_angle < (counterclockwise_angle) then
@@ -505,7 +552,7 @@ Laser = Object:new({class = "Laser"})
 
 				spawn_pos = self.spawn_pos - ship_middle
 				spawn_pos = spawn_pos:rotate(self.rot_vel)
-				spawn_pos = spawn_pos * (1 / spawn_pos:norm())
+				spawn_pos = spawn_pos:normalize()
 				self.spawn_pos = ship_middle + (spawn_pos * 32)
 				self.end_pos = ship_middle + (spawn_pos * self.length)
 
@@ -521,7 +568,7 @@ Laser = Object:new({class = "Laser"})
 
 				spawn_pos = self.spawn_pos - ship_middle
 				spawn_pos = spawn_pos:rotate(- self.rot_vel)
-				spawn_pos = spawn_pos * (1 / spawn_pos:norm())
+				spawn_pos = spawn_pos:normalize()
 				self.spawn_pos = ship_middle + (spawn_pos * 32)
 				self.end_pos = ship_middle + (spawn_pos * self.length)
 

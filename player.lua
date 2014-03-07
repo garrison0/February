@@ -20,10 +20,10 @@ Player = Object:new({class = "Player"})
 	end
 
 	function Player:collision()
-		local p1 = Vector:new(player.pos.x + 14, player.pos.y + 11)
-		local p2 = Vector:new(player.pos.x + 18, player.pos.y + 11)
-		local p3 = Vector:new(player.pos.x + 18, player.pos.y + 18)
-		local p4 = Vector:new(player.pos.x + 14, player.pos.y + 18)
+		local p1 = Vector:new(self.pos.x + 14, self.pos.y + 11)
+		local p2 = Vector:new(self.pos.x + 18, self.pos.y + 11)
+		local p3 = Vector:new(self.pos.x + 18, self.pos.y + 18)
+		local p4 = Vector:new(self.pos.x + 14, self.pos.y + 18)
 		return BoundingAggregate:new({BoundingTriangle:new(p1, p2, p3), BoundingTriangle:new(p1, p4, p3)})
 	end
 
@@ -91,7 +91,7 @@ Player = Object:new({class = "Player"})
 
 		end
 
-		if self.currentCharge >= self.chargeLength and player.laserOn == false then
+		if self.currentCharge >= self.chargeLength and self.laserOn == false then
 
 				ship_middle = Vector:new(self.pos.x + self.width / 2, self.pos.y + self.height / 2)
 				ship_to_mouse = (game.mousePos - ship_middle)
@@ -99,10 +99,10 @@ Player = Object:new({class = "Player"})
 
 				spawn_pos = ship_middle + Vector:new(0, -32) 
 
-				laser = Laser:new(spawn_pos, 225, 1, 5)
+				laser = Laser:new(spawn_pos, 425, 1, "player")
+				table.insert(game.entities, laser)
 
 				self.laser = laser
-				table.insert(game.entities, self.laser)
 				self.laserOn = true
 
 		end
@@ -121,33 +121,33 @@ Player = Object:new({class = "Player"})
 
 	function Player:shoot()
 		-- level 1
-		if (player.bulletLevel == 1) then
-			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
+		if (self.bulletLevel == 1) then
+			bullet = Bullet:new(Vector:new(self.pos.x + 3 * self.width/4, self.pos.y), 
 										Vector:new(0,1000), 1, 8, "player")
 
-			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
+			bullet2 = Bullet:new(Vector:new(self.pos.x + 1 * self.width/4, self.pos.y), 
 										Vector:new(0,1000), 1, 8, "player")
 
-			player.fire_delay = .2
+			self.fire_delay = .2
 			table.insert(game.entities, bullet)
 			table.insert(game.entities, bullet2)
 		end
 
 		-- level 2
-		if (player.bulletLevel == 2) then
-			bullet = Bullet:new(Vector:new(player.pos.x + 3 * player.width/4, player.pos.y), 
+		if (self.bulletLevel == 2) then
+			bullet = Bullet:new(Vector:new(self.pos.x + 3 * self.width/4, self.pos.y), 
 										Vector:new(0,1000), 1, 8, "player")
 
-			bullet2 = Bullet:new(Vector:new(player.pos.x + 1 * player.width/4, player.pos.y), 
+			bullet2 = Bullet:new(Vector:new(self.pos.x + 1 * self.width/4, self.pos.y), 
 										Vector:new(0,1000), 1, 8, "player")
 
-			bullet3 = Bullet:new(Vector:new(player.pos.x + player.width, player.pos.y), 
+			bullet3 = Bullet:new(Vector:new(self.pos.x + self.width, self.pos.y), 
 										Vector:new(200,800), 1, 5, "player")
 
-			bullet4 = Bullet:new(Vector:new(player.pos.x, player.pos.y), 
+			bullet4 = Bullet:new(Vector:new(self.pos.x, self.pos.y), 
 										Vector:new(-200,800), 1, 5, "player")
 
-			player.fire_delay = .1
+			self.fire_delay = .1
 			table.insert(game.entities, bullet)
 			table.insert(game.entities, bullet2)
 			table.insert(game.entities, bullet3)
@@ -155,7 +155,7 @@ Player = Object:new({class = "Player"})
 		end
 	end
 
-	function Player:shootLaser(mouse_pos)
+	function Player:shootLaser()
 
 		if self.laserEnergy > 0 then
 
