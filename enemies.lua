@@ -406,7 +406,7 @@ Turret = Object:new({class = "Turret"})
 	function Turret:update(dt)
 
 		-- update the position
-		if self.targetPos - self.pos ~= Vector:new(0, 0) then
+		if (self.targetPos - self.pos):norm() > 1 then
 
 			-- find velocity direction, multiply by velocity scalar.
 			direction = (self.targetPos - self.pos)
@@ -432,8 +432,8 @@ Turret = Object:new({class = "Turret"})
 
 			if self.bulletLevel == 1 then
 
-				bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10)
-				table.insert(game.enemyBullets, bullet)
+				bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10, "enemy")
+				table.insert(game.entities, bullet)
 
 			end
 
@@ -445,8 +445,8 @@ Turret = Object:new({class = "Turret"})
 				for i = 1, 11 do
 
 					velocity = velocity:rotate(math.pi / (variance + 11))
-					bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10)
-					table.insert(game.enemyBullets, bullet)
+					bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10, "enemy")
+					table.insert(game.entities, bullet)
 
 				end
 			end
@@ -509,7 +509,6 @@ Boss = Object:new({class = "Boss"})
 		if self.pos.x + self.width > game.width - 10 or self.pos.x < 10 then
 			self.vel.x = self.vel.x * -1
 		end
-
 
 		self.fireDelay = self.fireDelay - dt
 

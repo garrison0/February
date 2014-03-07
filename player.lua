@@ -11,7 +11,7 @@ Player = Object:new({class = "Player"})
 			a = 0, s = 0, d = 0, w = 0,
 			isMovingX = false, isMovingY = false,
 			isChargingLaser = false, chargeLength = 1.5,
-			currentCharge = 0
+			currentCharge = 0, isDead_ = false
 		})
 		setmetatable(player,self)
 		self.__index = self
@@ -24,6 +24,14 @@ Player = Object:new({class = "Player"})
 		local p3 = Vector:new(player.pos.x + 18, player.pos.y + 18)
 		local p4 = Vector:new(player.pos.x + 14, player.pos.y + 18)
 		return BoundingAggregate:new({BoundingTriangle:new(p1, p2, p3), BoundingTriangle:new(p1, p4, p3)})
+	end
+
+	function Player:draw()
+		love.graphics.polygon("line", {self.pos.x, self.pos.y + 32, self.pos.x + 8, self.pos.y, self.pos.x + 12, self.pos.y + 10,
+	    							   self.pos.x + 14, self.pos.y + 11, self.pos.x + 16, self.pos.y + 6, self.pos.x + 18, self.pos.y + 11,
+	    							   self.pos.x + 20, self.pos.y + 10, self.pos.x + 24, self.pos.y + 0, self.pos.x + 32, self.pos.y + 32,
+	    							   self.pos.x + 20, self.pos.y + 18, self.pos.x + 18, self.pos.y + 18, self.pos.x + 16, self.pos.y + 24,
+	    							   self.pos.x + 14, self.pos.y + 18, self.pos.x + 12, self.pos.y + 18, self.pos.x, self.pos.y + 32, self.pos.x, self.pos.y + 8})
 	end
 
 	function Player:update(dt)
@@ -58,6 +66,13 @@ Player = Object:new({class = "Player"})
 
 		-- delay for regular shooting
 		self.fire_delay = self.fire_delay - dt
+
+		-- shoot?
+		if self.fire_delay <= 0 then
+			if self.shooting then
+				self:shoot()
+			end
+		end
 
 		-- build up charge
 		if self.isChargingLaser then

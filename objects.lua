@@ -48,11 +48,12 @@ Game = Object:new({class = "Game"})
 			self.entities = {}
 
 			-- load initial menu things
-			start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
-			table.insert(self.entities, start_button)
+			self.startButton = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)		
+			self.mouseClick = Bullet:new(Vector:new(0, 0), Vector:new(0, 0), 99999)
 
 			-- set up the level triggers
-			self.levelTriggers = {}
+			self.levelTriggers = {startTrigger = true}
+			self.stateNotLoaded = false
 
 		elseif self.state == "level1" and self.stateNotLoaded == true then
 
@@ -65,6 +66,7 @@ Game = Object:new({class = "Game"})
 
 			-- set up the level triggers
 			self.levelTriggers = {wave1 = true}
+			self.stateNotLoaded = false
 
 		end
 
@@ -179,8 +181,14 @@ Game = Object:new({class = "Game"})
 		-- menu triggers
 		if self.state == "menu" then
 
-			-- barring some complicated UI, I think this works fine.
-
+			if trigger == "startTrigger" then
+				-- meh, clearly a hack here.
+				if detect(self.mouseClick, self.startButton) then
+					self.state = "level1"
+					self.stateNotLoaded = true
+					self.triggerNotLoaded = true
+				end
+			end
 		end
 
 		-- level 1 triggers
@@ -188,6 +196,14 @@ Game = Object:new({class = "Game"})
 
 			-- "wave" triggers -- spawn enemies and wait till they're dead.
 			if string.sub(trigger, 1, 4) == "wave" then
+
+				-- hm... have to gather all current enemies.. didn't expect dis
+				enemies = {}
+				for k, v in pairs(self.entities) do
+					if v.class == "Enemy" or v.class == "Turret" then
+						table.insert(enemies, v)
+					end
+				end
 
 				-- condition
 				if (enemies[1] == nil) then
@@ -213,7 +229,7 @@ Game = Object:new({class = "Game"})
 
 			if trigger == "boss" then
 
-				if boss == nil then
+				if self.entities.boss == nil then
 
 					self.state = "menu"
 					self.stateNotLoaded = true
@@ -232,17 +248,17 @@ Game = Object:new({class = "Game"})
 			-- who shot it? {player, enemy}
 			if a.owner == "player" then
 				-- hit a default enemy
-				if b.class == "Enemy" then
+				if b.class == "Enemy" or b.class == "Turret" then
 					-- result
 					b.health = b.health - a.damage
-
+					a.isDead_ = true
 				end
 
 				-- hit boss 1
 				if b.class == "Boss" then
 					-- result
 					b.health = b.health - a.damage
-
+					a.isDead_ = true
 				end
 			end
 
@@ -251,8 +267,9 @@ Game = Object:new({class = "Game"})
 				-- hit the player
 				if b.class == "Player" then
 					-- mark the player to die
+					b.isDead_ = true
+					a.isDead_ = true
 				end
-
 			end
 		end
 
@@ -262,21 +279,8 @@ Game = Object:new({class = "Game"})
 			-- vs. boss, enemy, etc.
 			if(b.class == "Enemy") or (b.class == "Boss") then
 				-- mark player to die
-
+				a.isDead_ = true
 			end
-		end
-
-		-- menu buttons vs. the mouse (WHAT IS UI???????)
-		if(a.class == "MenuButton") then
-
-			if(b.class == "Bullet") then
-
-				-- could put up some flag, but this works.
-				self.state = "level1"
-				self.stateNotLoaded = true
-
-			end
-
 		end
 	end
 
@@ -318,11 +322,6 @@ MenuButton = Object:new({class = "MenuButton"})
 
 	end
 
-	function MenuButton:update(dt)
-
-		-- NICE DESIGN FLAW MATE, IS TENOUTTATEN!
-
-	end
 
 CircleObstacle = Object:new({class = "CircleObstacle"})
 
@@ -354,7 +353,7 @@ Bullet = Object:new({class = "Bullet"})
 		local bullet = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			life = life or 0, damage = damage or 0, width = 4, height = 4,
-			owner = owner or "player"
+			owner = owner or "player", offScreen_ = false
 		})
 		setmetatable(bullet,self)
 		self.__index = self
@@ -362,11 +361,17 @@ Bullet = Object:new({class = "Bullet"})
 
 	end
 
+	function Bullet:draw()
+
+		love.graphics.circle("line", self.pos.x, self.pos.y, 4)
+
+	end
+
 	function Bullet:collision()
 
 		local v = Vector:new(self.pos.x + self.width/2, 
 							 self.pos.y + self.height/2)
-		return BoundingAggregate:new({BoundingSphere:new(v,2)})
+		return BoundingAggregate:new({BoundingSphere:new(v,4)})
 
 	end
 
@@ -375,6 +380,11 @@ Bullet = Object:new({class = "Bullet"})
 		self.life = self.life - dt;
 		self.pos.y = self.pos.y - self.vel.y * dt
 		self.pos.x = self.pos.x + (self.vel.x or 0) * dt
+
+		-- off screen? to go away!
+		if self.pos.x > game.width or self.pos.x < 0 or self.pos.y > game.height or self.pos.y < 0 then
+			self.isDead_ = true
+		end 
 
 	end
 

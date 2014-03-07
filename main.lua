@@ -36,16 +36,6 @@ function love.load()
 	-- game
 	game = Game:new("menu", 800, 700, false)
 
-	-- load menu stuff
-
-	start_button = MenuButton:new("START GAME", Vector:new(100, 200), 400, 100)
-
-	-- lol hi, flags.
-	wave1_On = false
-	wave2_On = false
-	wave3_On = false
-	boss_dead = false
-
 end
 
 function love.update(dt)
@@ -67,6 +57,9 @@ function love.update(dt)
 			end
 		end
 
+		-- marked dead for whatever reason?
+		if v.isDead_ then table.remove(game.entities, i) end
+
 		-- life/time/ ran out?
 		if v.life ~= nil then
 			if v.life <= 0 then
@@ -75,7 +68,7 @@ function love.update(dt)
 		end
 
 		if (v.class == "Player") then
-			if player.laserOn == true then
+			if player.laserOn then
 				player.vel = Vector:new(50, 50)
 			else
 				player.vel = Vector:new(300, 250)
@@ -173,6 +166,11 @@ function love.mousepressed(x, y, button)
 		if not(game.state == "menu") and not(game.state == "pause") then
 			player.shooting = true
 		end
+
+		if game.state == "menu" then
+			-- this seems lazy, but it works.
+			if game.mouseClick ~= nil then game.mouseClick.pos = Vector:new(x, y) end
+		end
 	end
 
 	if button == 'r' then
@@ -180,10 +178,6 @@ function love.mousepressed(x, y, button)
 			local mouse_pos = Vector:new(love.mouse.getX(), love.mouse.getY())
 			player:shootLaser(mouse_pos)
 		end
-		
-		-- this seems lazy, but it works.
-		game.mousePressedPos = Vector:new(x, y)
-		game.entities.click = Bullet:new(game.mousePressedPos)
 
 	end
 end
@@ -209,59 +203,25 @@ function love.draw()
 
 	if game.state == "menu" then
 
-		love.graphics.print("SHMUP GAEM XDDD", 100, 50)
-		start_button:draw()
+		love.graphics.print("SHMUP", 100, 50)
+		game.startButton:draw()
+		game.mouseClick:draw()
 
 	end
 
 	if game.state == "level1" and game.stateNotLoaded == false then
-		-- draw player
-	    love.graphics.polygon("line", {player.pos.x, player.pos.y + 32, player.pos.x + 8, player.pos.y, player.pos.x + 12, player.pos.y + 10,
-	    							   player.pos.x + 14, player.pos.y + 11, player.pos.x + 16, player.pos.y + 6, player.pos.x + 18, player.pos.y + 11,
-	    							   player.pos.x + 20, player.pos.y + 10, player.pos.x + 24, player.pos.y + 0, player.pos.x + 32, player.pos.y + 32,
-	    							   player.pos.x + 20, player.pos.y + 18, player.pos.x + 18, player.pos.y + 18, player.pos.x + 16, player.pos.y + 24,
-	    							   player.pos.x + 14, player.pos.y + 18, player.pos.x + 12, player.pos.y + 18, player.pos.x, player.pos.y + 32, player.pos.x, player.pos.y + 8})
-
-	    -- draw circular obstacles (TEST)
-	    for i, v in ipairs(obstacles) do
-	    	v:draw()
-	    end
-
-	    -- draw bullets
-	    for i, v in ipairs(player.bullets) do
-	    	love.graphics.circle("line", v.pos.x, v.pos.y, 4, 10)
-	    end
-
-	    -- draw enemy bullets
-	    for i, v in ipairs(game.enemyBullets) do
-	    	love.graphics.circle("fill", v.pos.x, v.pos.y, 4, 10)
-	    end
-
-	    -- draw the laser 
-	    if(player.laserOn) then
-	    	player.laser:draw()
-	    end
-
-	    -- draw enemies
-	    for i, v in ipairs(enemies) do
-	    	v:draw()
-	    end
-
-	    -- draw powerups
-	    for i, v in ipairs(powerups) do
-	    	v:draw()
-	    end
-
-	    -- draw boss
-	    if(boss ~= nil) then
-	    	boss:draw()
-	    end
-
 	    -- UI
 	    love.graphics.print("Lives: " .. "lol someone should put lives in", 25, 25)
 	    love.graphics.print("Laser Energy: " .. player.laserEnergy, 25, 50)
 	    love.graphics.print("Current charge: " .. player.currentCharge, 25, 75)
 	    love.graphics.print("Score: " .. tostring(1), game.width - 125, 25)
+	end
+
+	-- draw entities
+	for i, v in ipairs(game.entities) do
+
+		v:draw()
+
 	end
 
 end
