@@ -401,23 +401,23 @@ Bullet = Object:new({class = "Bullet"})
 
 Laser = Object:new({class = "Laser"})
 
-	function Laser:new(spawn_pos, end_pos, damage, owner)
+	function Laser:new(spawn_pos, length, damage, owner)
 
 		local laser = Object:new({
 			spawn_pos = spawn_pos or Vector:new(0, 0), 
-			end_pos = end_pos or Vector:new(0, 0),
+			length = length or 225,
 			damage = damage or 0,
-			angle = 0, goal_angle = 0, rot_vel = math.pi / 2500,
+			angle = 0, goal_angle = 0, rot_vel = math.pi / 400,
 			owner = owner or "player"
 		})
 
 		-- find angle
-		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
-
-		vec_A = end_pos - ship_middle
-		
+		ship_middle = Vector:new(game.player.pos.x + game.player.width / 2, game.player.pos.y + game.player.height / 2)
+		vec_A = (spawn_pos - ship_middle)
 		laser.angle = math.atan2(vec_A.y, vec_A.x)
 		if laser.angle < 0 then laser.angle = laser.angle + math.pi * 2 end
+
+		laser.end_pos = (laser.spawn_pos):normalize() * laser.length
 
 		-- for later use
 		clockwise_angle = 0
@@ -446,30 +446,24 @@ Laser = Object:new({class = "Laser"})
 	function Laser:update(dt)
 
 		-- update position if the ship is moving
-		if player.isMovingX then
+		if game.player.isMovingX then
 
-			self.spawn_pos.x = self.spawn_pos.x - player.vel.x * dt * player.a
-									  + player.vel.x * dt * player.d
-			
-
-			self.end_pos.x = self.end_pos.x - player.vel.x * dt * player.a
-									  + player.vel.x * dt * player.d
-			
+			self.spawn_pos.x = self.spawn_pos.x - game.player.vel.x * dt * game.player.a
+									  + game.player.vel.x * dt * game.player.d
+			self.end_pos = self.spawn_pos:normalize() * self.length
 		end
 
-		if player.isMovingY then
+		if game.player.isMovingY then
 			
-			self.spawn_pos.y = self.spawn_pos.y + player.vel.y * dt * player.s
-									  - player.vel.y * dt * player.w
-
-			self.end_pos.y = self.end_pos.y + player.vel.y * dt * player.s
-									  - player.vel.y * dt * player.w
+			self.spawn_pos.y = self.spawn_pos.y + game.player.vel.y * dt * game.player.s
+									  - game.player.vel.y * dt * game.player.w
+			self.end_pos = self.spawn_pos:normalize() * self.length
 
 		end
 
 		-- calculate new vector based on mouse position
-		ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
-		ship_to_mouse = (mouse_pos - ship_middle)
+		ship_middle = Vector:new(game.player.pos.x + game.player.width / 2, game.player.pos.y + game.player.height / 2)
+		ship_to_mouse = (game.mousePos - ship_middle)
 
 		vec_A = ship_to_mouse
 
@@ -495,7 +489,7 @@ Laser = Object:new({class = "Laser"})
 			end
 		end
 
-		--print("clck: " .. tostring(clockwise_angle) .. " cc: " .. tostring(counterclockwise_angle) .. " angle: " .. tostring(self.angle))
+		print("clck: " .. tostring(clockwise_angle) .. " cc: " .. tostring(counterclockwise_angle) .. " angle: " .. tostring(self.angle))
 		
 		-- determine if we need to rotate
 		if self.angle < (self.goal_angle - self.rot_vel) or self.angle > (self.goal_angle + self.rot_vel) then
@@ -513,7 +507,7 @@ Laser = Object:new({class = "Laser"})
 				spawn_pos = spawn_pos:rotate(self.rot_vel)
 				spawn_pos = spawn_pos * (1 / spawn_pos:norm())
 				self.spawn_pos = ship_middle + (spawn_pos * 32)
-				self.end_pos = ship_middle + (spawn_pos * 258)
+				self.end_pos = ship_middle + (spawn_pos * self.length)
 
 			end
 
@@ -529,7 +523,7 @@ Laser = Object:new({class = "Laser"})
 				spawn_pos = spawn_pos:rotate(- self.rot_vel)
 				spawn_pos = spawn_pos * (1 / spawn_pos:norm())
 				self.spawn_pos = ship_middle + (spawn_pos * 32)
-				self.end_pos = ship_middle + (spawn_pos * 258)
+				self.end_pos = ship_middle + (spawn_pos * self.length)
 
 			end
 		end

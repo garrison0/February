@@ -488,13 +488,13 @@ Turret = Object:new({class = "Turret"})
 -- First Boss
 Boss = Object:new({class = "Boss"})
 
-	function Boss:new(pos, vel, width, height, health, fireDelay)
+	function Boss:new(pos, vel, width, height, health, fireDelay, target)
 
 		local boss = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			health = health or 0, width = width or 0, height = height or 0,
 			fireRate = fireDelay or .5, fireDelay = fireDelay or .5,
-			phase = 1
+			phase = 1, target = target
 		})
 		setmetatable(boss, self)
 		self.__index = self
@@ -504,6 +504,8 @@ Boss = Object:new({class = "Boss"})
 
 	function Boss:update(dt)
 
+		self.target = game.player
+		
 		self.pos = self.pos + self.vel * dt
 
 		if self.pos.x + self.width > game.width - 10 or self.pos.x < 10 then
@@ -523,16 +525,16 @@ Boss = Object:new({class = "Boss"})
 
 			for i = 1, 2 do
 
-				player_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+				player_middle = Vector:new(self.target.pos.x + self.target.width / 2, self.target.pos.y + self.target.height / 2)
 
-				-- add player velocities to be cheeky 
-				variance = (12 * math.random(0, 400) / math.sqrt(player.vel:norm()))
+				-- add self.target velocities to be cheeky 
+				variance = (12 * math.random(0, 400) / math.sqrt(self.target.vel:norm()))
 
-				player_middle.x = player_middle.x + variance *((player.vel.x * dt * -player.a)
-												  + (player.vel.x * dt * player.d))
+				player_middle.x = player_middle.x + variance *((self.target.vel.x * dt * -self.target.a)
+												  + (self.target.vel.x * dt * self.target.d))
 
-				player_middle.y = player_middle.y + variance *((player.vel.y * dt * -player.w)
-												  + (player.vel.y * dt * player.s))
+				player_middle.y = player_middle.y + variance *((self.target.vel.y * dt * -self.target.w)
+												  + (self.target.vel.y * dt * self.target.s))
 
 				gun_to_player = (player_middle - points[i])
 				gun_to_player = (gun_to_player * (1 / gun_to_player:norm()))

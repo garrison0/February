@@ -77,7 +77,7 @@ function love.update(dt)
 		end
 
 			-- player checks
-		if game.player.laserOn then
+		if game.player.laserOn or game.player.isChargingLaser then
 			player.vel = Vector:new(50, 50)
 		else
 			player.vel = Vector:new(300, 250)

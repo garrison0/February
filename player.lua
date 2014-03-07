@@ -2,7 +2,7 @@ require "object"
 
 Player = Object:new({class = "Player"})
 
-	function Player:new(pos, vel)
+	function Player:new(pos, vel, invul_)
 		local player = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			shooting = false, fire_delay = 0, 
@@ -11,7 +11,8 @@ Player = Object:new({class = "Player"})
 			a = 0, s = 0, d = 0, w = 0,
 			isMovingX = false, isMovingY = false,
 			isChargingLaser = false, chargeLength = 1.5,
-			currentCharge = 0, isDead_ = false
+			currentCharge = 0, isDead_ = false,
+			invul_ = invul_ or false, invulTime = 3, currentInvul = 0
 		})
 		setmetatable(player,self)
 		self.__index = self
@@ -39,6 +40,14 @@ Player = Object:new({class = "Player"})
 		-- update flag (used in laser)
 		if self.a ~= 0 or self.s ~= 0 or self.d ~= 0 or self.w ~= 0 then 
 			self.isMovingY = true; self.isMovingX = true else self.isMoving = false 
+		end
+
+		-- invulnerability (spawning)
+		if self.invul_ then
+			self.currentInvul = self.currentInvul + dt
+			if self.currentInvul > self.invulTime then
+				self.invul_ = false
+			end
 		end
 
 		-- keep it on screen
@@ -84,18 +93,16 @@ Player = Object:new({class = "Player"})
 
 		if self.currentCharge >= self.chargeLength and player.laserOn == false then
 
-				ship_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
-				ship_to_mouse = (mouse_pos - ship_middle)
-				ship_to_mouse = (ship_to_mouse * (1/ship_to_mouse:norm()))
+				ship_middle = Vector:new(self.pos.x + self.width / 2, self.pos.y + self.height / 2)
+				ship_to_mouse = (game.mousePos - ship_middle)
+				ship_to_mouse = ship_to_mouse:normalize()
 
-				--spawn_pos = ship_middle + (ship_to_mouse * 32)
-				--end_pos = spawn_pos + (ship_to_mouse * 225)
 				spawn_pos = ship_middle + Vector:new(0, -32) 
-				end_pos = spawn_pos + Vector:new(0, -225) 
 
-				laser = Laser:new(spawn_pos, end_pos, 1, 5)
+				laser = Laser:new(spawn_pos, 225, 1, 5)
 
 				self.laser = laser
+				table.insert(game.entities, self.laser)
 				self.laserOn = true
 
 		end
