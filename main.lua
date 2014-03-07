@@ -67,21 +67,31 @@ function love.update(dt)
 			end
 		end
 
-		if (v.class == "Player") then
-			if player.laserOn then
-				player.vel = Vector:new(50, 50)
-			else
-				player.vel = Vector:new(300, 250)
-			end
-		end
-
 		for j, k in ipairs(game.entities) do
 			--[[--
-			-- multi-enemy based updates
+			-- multi-entity based updates
 			--]]
 			if detect(v, k) then
 				game:resolveCollision(v, k)
 			end
+		end
+
+			-- player checks
+		if game.player.laserOn then
+			player.vel = Vector:new(50, 50)
+		else
+			player.vel = Vector:new(300, 250)
+		end
+
+		if player.isDead_ then
+			game.playerLives = game.playerLives - 1
+			if game.playerLives <= 0 then
+				game.playerLives = 0
+				-- GAME OVER HERE..
+			end
+			player = Player:new(Vector:new(350, 350), Vector:new(300, 250), true)
+			game.player = player
+			table.insert(game.entities, player)
 		end
 	end
 
@@ -211,7 +221,7 @@ function love.draw()
 
 	if game.state == "level1" and game.stateNotLoaded == false then
 	    -- UI
-	    love.graphics.print("Lives: " .. "lol someone should put lives in", 25, 25)
+	    love.graphics.print("Lives: " .. game.playerLives, 25, 25)
 	    love.graphics.print("Laser Energy: " .. player.laserEnergy, 25, 50)
 	    love.graphics.print("Current charge: " .. player.currentCharge, 25, 75)
 	    love.graphics.print("Score: " .. tostring(1), game.width - 125, 25)

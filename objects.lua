@@ -11,7 +11,7 @@ Game = Object:new({class = "Game"})
 		love.window.setMode(width, height, {fullscreen = fullscreen or false})
 		local game = {width = width or 0, height = height or 0, 
 					 stateNotLoaded = true, triggerNotLoaded = true, 
-					 fullscreen = fullscreen or false}
+					 fullscreen = fullscreen or false, playerLives = 3}
 
 		game.state = initial_state or "level1"
 
@@ -62,6 +62,7 @@ Game = Object:new({class = "Game"})
 
 			-- load initial level 1 things
 			player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
+			game.player = player
 			table.insert(self.entities, player)
 
 			-- set up the level triggers
@@ -168,7 +169,7 @@ Game = Object:new({class = "Game"})
 			if trigger == "boss" then
 
 				-- spawn boss
-				boss = Boss:new(Vector:new(25, 25), Vector:new(50,0), 600, 150, 2500, .05)
+				boss = Boss:new(Vector:new(25, 25), Vector:new(50,0), 600, 150, 2500, .05, game.player)
 				table.insert(self.entities, boss)
 
 			end
@@ -229,7 +230,13 @@ Game = Object:new({class = "Game"})
 
 			if trigger == "boss" then
 
-				if self.entities.boss == nil then
+				boss = {}
+				for k,v in pairs(self.entities) do
+					if v.class == "Boss" then
+						table.insert(boss, v) 
+					end
+				end
+				if boss[1] == nil then
 
 					self.state = "menu"
 					self.stateNotLoaded = true
@@ -267,7 +274,9 @@ Game = Object:new({class = "Game"})
 				-- hit the player
 				if b.class == "Player" then
 					-- mark the player to die
-					b.isDead_ = true
+					if not b.invul_ then
+						b.isDead_ = true
+					end
 					a.isDead_ = true
 				end
 			end
@@ -279,7 +288,9 @@ Game = Object:new({class = "Game"})
 			-- vs. boss, enemy, etc.
 			if(b.class == "Enemy") or (b.class == "Boss") then
 				-- mark player to die
-				a.isDead_ = true
+				if not b.invul_ then
+					a.isDead_ = true
+				end
 			end
 		end
 	end
@@ -353,7 +364,7 @@ Bullet = Object:new({class = "Bullet"})
 		local bullet = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			life = life or 0, damage = damage or 0, width = 4, height = 4,
-			owner = owner or "player", offScreen_ = false
+			owner = owner or "player", isDead_ = false
 		})
 		setmetatable(bullet,self)
 		self.__index = self
