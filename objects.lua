@@ -127,7 +127,7 @@ Game = Object:new({class = "Game"})
 					x_iter = i * 125
 					pos = Vector:new(x_iter, -100)
 					targetPos = Vector:new(pos.x, pos.y + 200)
-					turret = Turret:new(pos, targetPos, 50, .4, 1, 100, 32, 32)
+					turret = Turret:new(pos, targetPos, 50, .4, 1, 100)
 					table.insert(self.entities, turret)
 				end		
 
@@ -170,7 +170,7 @@ Game = Object:new({class = "Game"})
 				end
 
 				-- mean, scarey turret
-				turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, 1, 9, 350, 100, 32)
+				turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, 1, 9, 350)
 				table.insert(self.entities, turret)
 
 			end
@@ -328,6 +328,8 @@ Game = Object:new({class = "Game"})
 			smlExplosion:setPitch(1.3)
 			smlExplosion:setVolume(.5)
 			smlExplosion:play() 
+			if math.random(0, 10) == 1 then end
+
 		elseif entity.class == "Player" then
 
 		elseif entity.class == "Boss" then

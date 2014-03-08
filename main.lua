@@ -43,6 +43,28 @@ function love.update(dt)
 	-- update the game (triggers, level, etc)
 	game:update(dt)
 
+	if game.player ~= nil then
+		-- player checks
+		if game.player.laserOn or game.player.isChargingLaser then
+			game.player.vel = Vector:new(50, 50)
+		else
+			game.player.vel = Vector:new(300, 250)
+		end
+
+		if game.player.isDead_ then
+			game.player.laserOn = false
+			if game.player.laser ~= nil then game.player.laser.isDead_ = true end
+			game.playerLives = game.playerLives - 1
+			if game.playerLives <= 0 then
+				game.playerLives = 0
+				-- GAME OVER HERE..
+			end
+			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250), true)
+			game.player = player
+			table.insert(game.entities, game.player)
+		end
+	end
+
 	-- update entities
 	for i, v in ipairs(game.entities) do
 		--[[
@@ -63,7 +85,6 @@ function love.update(dt)
 			-- for effects, sound, etc.
 			game:resolveDeath(v)
 			table.remove(game.entities, i) 
-
 		end
 
 		-- life/time/ ran out?
@@ -80,26 +101,6 @@ function love.update(dt)
 			if detect(v, k) then
 				game:resolveCollision(v, k)
 			end
-		end
-
-		-- player checks
-		if game.player.laserOn or game.player.isChargingLaser then
-			game.player.vel = Vector:new(50, 50)
-		else
-			game.player.vel = Vector:new(300, 250)
-		end
-
-		if game.player.isDead_ then
-			game.player.laserOn = false
-			if game.player.laser ~= nil then game.player.laser.isDead_ = true end
-			game.playerLives = game.playerLives - 1
-			if game.playerLives <= 0 then
-				game.playerLives = 0
-				-- GAME OVER HERE..
-			end
-			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250), true)
-			game.player = player
-			table.insert(game.entities, game.player)
 		end
 	end
 
@@ -229,10 +230,11 @@ function love.draw()
 
 	if (string.sub(game.state, 1, 5) == "level" or game.state == "test") and game.stateNotLoaded == false then
 	    -- UI
+	    fps = love.timer.getFPS()
 	    love.graphics.print("Lives: " .. game.playerLives, 25, 25)
 	    love.graphics.print("Laser Energy: " .. game.player.laserEnergy, 25, 50)
 	    love.graphics.print("Current charge: " .. game.player.currentCharge, 25, 75)
-	    love.graphics.print("Score: " .. tostring(1), game.width - 125, 25)
+	    love.graphics.print("fps: " .. fps, game.width - 125, 25)
 	end
 
 	-- draw entities
@@ -241,5 +243,4 @@ function love.draw()
 		v:draw()
 
 	end
-
 end

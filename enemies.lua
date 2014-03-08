@@ -392,12 +392,20 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 -- Move and Shoot enemy
 Turret = Object:new({class = "Turret"})
 
-	function Turret:new(pos, targetPos, velScalar, fireDelay, bulletLevel, health, width, height)
+	function Turret:new(pos, targetPos, velScalar, fireDelay, bulletLevel, health, turretType)
 		turret = Object:new({pos = pos, targetPos = targetPos or Vector:new(0,0),
-				  velScalar = velScalar or 50,
+				  velScalar = velScalar or 50, turretType = turretType or "tank",
 				  fireDelay = fireDelay or 1, fireRate = fireDelay or 1, 
-				  width = width or 32, height = height or 32,
-				  bulletLevel = bulletLevel or 1, health = health or 100, life = life or 20})
+				  bulletLevel = bulletLevel or 1, health = health or 100, life = life or 20,
+				  })
+		if turret.turretType == "tank" then
+			self.width = 56
+			self.height = 46
+			self.image = love.graphics.newImage("/graphics/turretTank.png")
+			self.turretImage = love.graphics.newImage("/graphics/tankTurret.png")
+			direction = (turret.targetPos - turret.pos)
+			self.direction = direction:normalize()
+		end
 		self.__index = self
 		setmetatable(turret, self)
 		return turret
@@ -410,8 +418,8 @@ Turret = Object:new({class = "Turret"})
 
 			-- find velocity direction, multiply by velocity scalar.
 			direction = (self.targetPos - self.pos)
-			direction = direction * (1 / direction:norm())
-			velocity = direction * self.velScalar
+			self.direction = direction:normalize()
+			velocity = self.direction * self.velScalar
 
 			self.pos = self.pos + velocity * dt
 
@@ -422,8 +430,8 @@ Turret = Object:new({class = "Turret"})
 		if self.fireDelay <= 0 then
 
 			-- fire at the player depending upon bulletLevel
-			player_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
-			turret_middle = Vector:new(self.pos.x + self.width / 2, self.pos.y + self.height / 2)
+			player_middle = Vector:new(game.player.pos.x + game.player.width / 2, game.player.pos.y + game.player.height / 2)
+			turret_middle = self.pos
 			turret_to_player = (player_middle - turret_middle)
 			turret_to_player = (turret_to_player * (1/turret_to_player:norm()))
 
@@ -432,7 +440,7 @@ Turret = Object:new({class = "Turret"})
 
 			if self.bulletLevel == 1 then
 
-				bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10, "enemy")
+				bullet = Bullet:new(turret_middle + turret_to_player * 46, velocity, 10, 10, "enemy")
 				table.insert(game.entities, bullet)
 
 			end
@@ -445,7 +453,7 @@ Turret = Object:new({class = "Turret"})
 				for i = 1, 11 do
 
 					velocity = velocity:rotate(math.pi / (variance + 11))
-					bullet = Bullet:new(turret_middle + turret_to_player * 50, velocity, 10, 10, "enemy")
+					bullet = Bullet:new(turret_middle + turret_to_player * 46, velocity, 10, 10, "enemy")
 					table.insert(game.entities, bullet)
 
 				end
@@ -457,32 +465,29 @@ Turret = Object:new({class = "Turret"})
 
 	function Turret:collision()
 
-		p1 = self.pos
-		p2 = Vector:new(self.pos.x + self.width, self.pos.y)
-		p3 = Vector:new(self.pos.x, self.pos.y + self.height)
-		p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
-		return BoundingAggregate:new({BoundingTriangle:new(p1, p2, p3), BoundingTriangle:new(p2, p3, p4)})
+		local vecPerp = self.direction:rotate(math.pi / 2)
+		p1 = self.pos - (self.direction * (self.height / 2)) + (vecPerp * (self.width / 2))
+		p2 = self.pos - (self.direction * (self.height / 2)) - (vecPerp * (self.width / 2))
+		p3 = self.pos + (self.direction * (self.height / 2)) + (vecPerp * (self.width / 2))
+		p4 = self.pos + (self.direction * (self.height / 2)) - (vecPerp * (self.width / 2))
+		return BoundingAggregate:new({BoundingTriangle:new(p1, p2, p4), BoundingTriangle:new(p1, p3, p4)})
 
 	end
 
 	function Turret:draw()
 
-		-- draw the box
-		p1 = self.pos
-		p2 = Vector:new(self.pos.x + self.width, self.pos.y)
-		p3 = Vector:new(self.pos.x, self.pos.y + self.height)
-		p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
-		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p4.x, p4.y, p3.x, p3.y)
+		-- draw the tank
+		tankAngle = self.direction:angle()
+		love.graphics.draw(self.image, self.pos.x, self.pos.y, tankAngle, 1, 1, self.width/2, self.height/2)
 
 		-- draw the gun
-		player_middle = Vector:new(player.pos.x + player.width / 2, player.pos.y + player.height / 2)
+		player_middle = Vector:new(game.player.pos.x + game.player.width / 2, game.player.pos.y + game.player.height / 2)
 		turret_middle = Vector:new(self.pos.x + self.width / 2, self.pos.y + self.height / 2)
 		turret_to_player = (player_middle - turret_middle)
 		turret_to_player = (turret_to_player * (1/turret_to_player:norm()))
 
-		endpos = turret_middle + (turret_to_player * 50)
-		love.graphics.line(turret_middle.x, turret_middle.y, endpos.x, endpos.y)
-
+		turretAngle = turret_to_player:angle()
+		love.graphics.draw(self.turretImage, self.pos.x, self.pos.y, turretAngle, 1, 1, 8, 8)
 	end
 
 -- First Boss

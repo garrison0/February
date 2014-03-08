@@ -12,7 +12,8 @@ Player = Object:new({class = "Player"})
 			isMovingX = false, isMovingY = false,
 			isChargingLaser = false, chargeLength = 1.5,
 			currentCharge = 0, isDead_ = false,
-			invul_ = invul_ or false, invulTime = 3, currentInvul = 0
+			invul_ = invul_ or false, invulTime = 3, currentInvul = 0,
+			image = love.graphics.newImage("/graphics/ship.png")
 		})
 		setmetatable(player,self)
 		self.__index = self
@@ -28,11 +29,9 @@ Player = Object:new({class = "Player"})
 	end
 
 	function Player:draw()
-		love.graphics.polygon("line", {self.pos.x, self.pos.y + 32, self.pos.x + 8, self.pos.y, self.pos.x + 12, self.pos.y + 10,
-	    							   self.pos.x + 14, self.pos.y + 11, self.pos.x + 16, self.pos.y + 6, self.pos.x + 18, self.pos.y + 11,
-	    							   self.pos.x + 20, self.pos.y + 10, self.pos.x + 24, self.pos.y + 0, self.pos.x + 32, self.pos.y + 32,
-	    							   self.pos.x + 20, self.pos.y + 18, self.pos.x + 18, self.pos.y + 18, self.pos.x + 16, self.pos.y + 24,
-	    							   self.pos.x + 14, self.pos.y + 18, self.pos.x + 12, self.pos.y + 18, self.pos.x, self.pos.y + 32, self.pos.x, self.pos.y + 8})
+
+		love.graphics.draw(self.image, self.pos.x, self.pos.y)
+
 	end
 
 	function Player:update(dt)
