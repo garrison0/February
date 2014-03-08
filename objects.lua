@@ -22,6 +22,10 @@ Game = Object:new({class = "Game"})
 		-- level data (counting time in a trigger for periodic spawns, etc)
 		game.levelData = {}
 
+		-- UI stuff. Don't mind me ^^'
+		game.livesGraphic = love.graphics.newImage("/graphics/1up.png")
+		game.playerGraphic = love.graphics.newImage("/graphics/ship.png")
+
 		setmetatable(game, self)
 		self.__index = self
 		return game
@@ -63,6 +67,7 @@ Game = Object:new({class = "Game"})
 			-- load initial level 1 things
 			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
 			game.player = player
+			game.playerLives = 3
 			table.insert(self.entities, player)
 
 			-- set up the level triggers
@@ -314,6 +319,7 @@ Game = Object:new({class = "Game"})
 			end
 			-- powerups
 			if(b.class == "PowerUp") then
+				b.isDead_ = true
 				if a.bulletLevel < 2 then a.bulletLevel = a.bulletLevel + 1 end
 			end
 		end
@@ -332,8 +338,8 @@ Game = Object:new({class = "Game"})
 			smlExplosion:setPitch(1.3)
 			smlExplosion:setVolume(.5)
 			smlExplosion:play() 
-			if math.random(1, 11) == 1 then 
-				powerup = PowerUp:new(entity.pos, 15)
+			if math.random(1, 1) == 1 then 
+				powerup = PowerUp:new(entity.pos, 10)
 				table.insert(self.entities, powerup)
 			end
 
@@ -617,8 +623,10 @@ PowerUp = Object:new({class = "PowerUp"})
 
 		powerup = Object:new({pos = pos or Vector:new(0,0),
 							  vel = Vector:new(0, 75),
+							  CONST_VEL = Vector:new(0, 10),
 							  lifetime = lifetime or 0,
-							  width = 25, height = 25})
+							  width = 25, height = 25,
+							  time = 0})
 		setmetatable(powerup, self)
 		self.__index = self
 		return powerup
@@ -652,7 +660,23 @@ PowerUp = Object:new({class = "PowerUp"})
 
 	function PowerUp:update(dt)
 
-		self.pos = self.pos + self.vel * dt
+		-- lissajous curve :-)
+		self.time = self.time + dt
+		local a = 2
+		local b = 1 
+		local v = self.vel
+		local k = self.vel
+		local X_AMP = 50
+		local Y_AMP = 50
+
+		local x = X_AMP * math.sin(a * self.time)
+		local y = Y_AMP * math.sin(b * self.time)
+
+		self.vel.x = x
+		self.vel.y = y
+
+		self.pos = Vector:new(self.pos.x + self.vel.x * dt, self.pos.y + self.vel.y * dt)
+		self.pos = self.pos + self.CONST_VEL * dt
 		self.lifetime = self.lifetime - dt
 
 	end

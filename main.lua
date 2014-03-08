@@ -58,7 +58,8 @@ function love.update(dt)
 			game.playerLives = game.playerLives - 1
 			if game.playerLives <= 0 then
 				game.playerLives = 0
-				-- GAME OVER HERE..
+				-- GAME OVER HERE.. NOT IMPLEMENTED YET
+				game.gameOver_ = true
 			end
 			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250), true)
 			game.player = player
@@ -225,17 +226,7 @@ function love.draw()
 
 		love.graphics.print("SHMUP", 100, 50)
 		game.startButton:draw()
-		--game.mouseClick:draw()
 
-	end
-
-	if (string.sub(game.state, 1, 5) == "level" or game.state == "test") and game.stateNotLoaded == false then
-	    -- UI
-	    fps = love.timer.getFPS()
-	    love.graphics.print("Lives: " .. game.playerLives, 25, 25)
-	    love.graphics.print("Laser Energy: " .. game.player.laserEnergy, 25, 50)
-	    love.graphics.print("Current charge: " .. game.player.currentCharge, 25, 75)
-	    love.graphics.print("fps: " .. fps, game.width - 125, 25)
 	end
 
 	-- draw entities
@@ -244,4 +235,22 @@ function love.draw()
 		v:draw()
 
 	end
+
+	if (string.sub(game.state, 1, 5) == "level" or game.state == "test") and game.stateNotLoaded == false then
+	    -- UI
+	    fps = love.timer.getFPS()
+	    -- lives
+	    love.graphics.draw(game.livesGraphic, 25, 25, 0, 1, .8, 12, 12)
+	    local count = game.playerLives
+	    local x_iter = 15
+	    if count ~= nil then
+		    for i = 1, count do
+		    	love.graphics.draw(game.playerGraphic, x_iter, 40, 0, .65, .65, 0, 0)
+		    	x_iter = x_iter + 25
+		    end
+		end
+	    love.graphics.print("Laser Energy: " .. game.player.laserEnergy, 25, game.height - 25)
+	    love.graphics.print("fps: " .. fps, game.width - 75, 25)
+	end
+
 end

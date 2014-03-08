@@ -533,7 +533,7 @@ Boss = Object:new({class = "Boss"})
 				player_middle = Vector:new(self.target.pos.x + self.target.width / 2, self.target.pos.y + self.target.height / 2)
 
 				-- add self.target velocities to be cheeky 
-				variance = (12 * math.random(0, 400) / math.sqrt(self.target.vel:norm()))
+				variance = (6 * math.random(0, 400) / math.sqrt(self.target.vel:norm()))
 
 				player_middle.x = player_middle.x + variance *((self.target.vel.x * dt * -self.target.a)
 												  + (self.target.vel.x * dt * self.target.d))
