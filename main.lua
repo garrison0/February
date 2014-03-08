@@ -53,6 +53,7 @@ function love.update(dt)
 
 		if game.player.isDead_ then
 			game.player.laserOn = false
+			game.player.currentCharge = 0
 			if game.player.laser ~= nil then game.player.laser.isDead_ = true end
 			game.playerLives = game.playerLives - 1
 			if game.playerLives <= 0 then
