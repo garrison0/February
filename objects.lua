@@ -312,6 +312,10 @@ Game = Object:new({class = "Game"})
 					a.isDead_ = true
 				end
 			end
+			-- powerups
+			if(b.class == "PowerUp") then
+				if a.bulletLevel < 2 then a.bulletLevel = a.bulletLevel + 1 end
+			end
 		end
 	end
 
@@ -320,7 +324,7 @@ Game = Object:new({class = "Game"})
 
 		if entity.class == "Enemy" then
 			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
-			smlExplosion:setPitch(2.5)
+			smlExplosion:setPitch(2)
 			smlExplosion:setVolume(.5)
 			smlExplosion:play() 
 		elseif entity.class == "Turret" then
@@ -328,7 +332,10 @@ Game = Object:new({class = "Game"})
 			smlExplosion:setPitch(1.3)
 			smlExplosion:setVolume(.5)
 			smlExplosion:play() 
-			if math.random(0, 10) == 1 then end
+			if math.random(1, 11) == 1 then 
+				powerup = PowerUp:new(entity.pos, 15)
+				table.insert(self.entities, powerup)
+			end
 
 		elseif entity.class == "Player" then
 
@@ -410,9 +417,19 @@ Bullet = Object:new({class = "Bullet"})
 
 		local bullet = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
-			life = life or 0, damage = damage or 0, width = 4, height = 4,
+			life = life or 0, damage = damage or 0,
 			owner = owner or "player", isDead_ = false
 		})
+
+		if bullet.owner == "enemy" then
+			bullet.image = love.graphics.newImage("/graphics/redbullet.png")
+			bullet.width = 8
+			bullet.height = 8
+		elseif bullet.owner == "player" then
+			bullet.image = love.graphics.newImage("/graphics/playerbullet.png")
+			bullet.width = 6 
+			bullet.height = 12
+		end
 		setmetatable(bullet,self)
 		self.__index = self
 		return bullet
@@ -421,15 +438,23 @@ Bullet = Object:new({class = "Bullet"})
 
 	function Bullet:draw()
 
-		love.graphics.circle("line", self.pos.x, self.pos.y, 4)
+		love.graphics.draw(self.image, self.pos.x, self.pos.y)
 
 	end
 
 	function Bullet:collision()
 
-		local v = Vector:new(self.pos.x + self.width/2, 
-							 self.pos.y + self.height/2)
-		return BoundingAggregate:new({BoundingSphere:new(v,4)})
+		if self.owner == "enemy" then
+			local v = Vector:new(self.pos.x + self.width/2, 
+								 self.pos.y + self.height/2)
+			return BoundingAggregate:new({BoundingSphere:new(v,4)})
+		elseif self.owner == "player" then
+			local p1 = self.pos
+			local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
+			local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
+			local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
+			return BoundingAggregate:new({BoundingTriangle:new(p1, p2, p4), BoundingTriangle:new(p2, p3, p4)})
+		end
 
 	end
 

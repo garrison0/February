@@ -121,10 +121,10 @@ Player = Object:new({class = "Player"})
 	function Player:shoot()
 		-- level 1
 		if (self.bulletLevel == 1) then
-			bullet = Bullet:new(Vector:new(self.pos.x + 3 * self.width/4, self.pos.y), 
+			bullet = Bullet:new(Vector:new(self.pos.x + 3 * self.width/4 - 4, self.pos.y), 
 										Vector:new(0,1000), 1, 8, "player")
 
-			bullet2 = Bullet:new(Vector:new(self.pos.x + 1 * self.width/4, self.pos.y), 
+			bullet2 = Bullet:new(Vector:new(self.pos.x + 1 * self.width/4 - 4, self.pos.y), 
 										Vector:new(0,1000), 1, 8, "player")
 
 			self.fire_delay = .2
