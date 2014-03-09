@@ -34,7 +34,7 @@ function love.load()
 	game = Game:new("menu", 800, 700, false)
 
 	-- set state to access test
-	game.state = "test"
+	--game.state = "test"
 
 end
 

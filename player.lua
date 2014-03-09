@@ -5,7 +5,7 @@ Player = Object:new({class = "Player"})
 	function Player:new(pos, vel, invul_)
 		local player = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
-			shooting = false, fire_delay = 0, 
+			shooting = false, fire_delay = .2, 
 			width = 32, height = 32, bulletLevel = 1, bullets = {},
 			laserOn = false, laserEnergy = 100000,
 			a = 0, s = 0, d = 0, w = 0,
@@ -38,20 +38,13 @@ Player = Object:new({class = "Player"})
 		-- PARTICLE SYSTEM : FLASH BANG
 		local particleImage = love.graphics.newImage("/graphics/particle.png")
 		local p = love.graphics.newParticleSystem(particleImage, 255)
-		p:setEmissionRate(5)
-		p:setParticleLifetime(.1)
-		p:setDirection(0)
-		p:setSpread(0)
-		p:setSpeed(0)
-		--p:setRadialAcceleration(0)
-		--p:setTangentialAcceleration(0)
-		p:setSizes(1.6)
+		local emitRate = 1 / player.fire_delay
+		p:setEmissionRate(emitRate)
+		p:setParticleLifetime(.05)
+		p:setSizes(2.5)
 		p:setSizeVariation(0)
-		p:setRotation(0)
-		p:setSpin(0)
-		p:setSpinVariation(0)
-		p:setColors({255, 240, 240, 140}, {237, 213, 157, 80})
-		--p:stop()
+		p:setColors({255, 247, 247, 140}, {255, 240, 240, 10})
+		p:stop()
 		player.flashBangParticle = p
 
 		setmetatable(player, self)
@@ -186,19 +179,21 @@ Player = Object:new({class = "Player"})
 
 		-- level 2
 		if (self.bulletLevel == 2) then
-			bullet = Bullet:new(Vector:new(self.pos.x + 3 * self.width/4, self.pos.y), 
-										Vector:new(0,1000), 1, 8, "player")
+			local firstX = self.pos.x + (self.width/2 - 3) - 4 
+			local secondX = self.pos.x + (self.width/2 - 3) + 4
+			bullet = Bullet:new(Vector:new(firstX, self.pos.y - 8), 
+										Vector:new(0, 750), 1, 8, "player")
 
-			bullet2 = Bullet:new(Vector:new(self.pos.x + 1 * self.width/4, self.pos.y), 
-										Vector:new(0,1000), 1, 8, "player")
+			bullet2 = Bullet:new(Vector:new(secondX, self.pos.y - 8), 
+										Vector:new(0, 750), 1, 8, "player")
 
-			bullet3 = Bullet:new(Vector:new(self.pos.x + self.width, self.pos.y), 
-										Vector:new(200,800), 1, 5, "player")
+			bullet3 = Bullet:new(Vector:new(firstX - 4, self.pos.y), 
+										Vector:new(-150,700), 1, 6, "player")
 
-			bullet4 = Bullet:new(Vector:new(self.pos.x, self.pos.y), 
-										Vector:new(-200,800), 1, 5, "player")
+			bullet4 = Bullet:new(Vector:new(secondX + 4, self.pos.y), 
+										Vector:new(150,700), 1, 6, "player")
 
-			self.fire_delay = .1
+			self.fire_delay = .15
 			table.insert(game.entities, bullet)
 			table.insert(game.entities, bullet2)
 			table.insert(game.entities, bullet3)

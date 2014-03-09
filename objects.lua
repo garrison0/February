@@ -67,7 +67,6 @@ Game = Object:new({class = "Game"})
 			-- load initial level 1 things
 			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
 			game.player = player
-			game.player.particleSystem:start()
 			game.playerLives = 3
 			table.insert(self.entities, player)
 

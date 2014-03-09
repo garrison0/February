@@ -399,12 +399,26 @@ Turret = Object:new({class = "Turret"})
 				  bulletLevel = bulletLevel or 1, health = health or 100, life = life or 20,
 				  })
 		if turret.turretType == "tank" then
-			self.width = 56
-			self.height = 46
-			self.image = love.graphics.newImage("/graphics/turretTank.png")
-			self.turretImage = love.graphics.newImage("/graphics/tankTurret.png")
+			turret.width = 56
+			turret.height = 46
+			turret.image = love.graphics.newImage("/graphics/turretTank.png")
+			turret.turretImage = love.graphics.newImage("/graphics/tankTurret.png")
 			direction = (turret.targetPos - turret.pos)
-			self.direction = direction:normalize()
+			turret.direction = direction:normalize()
+			turret.turretEnd = turret.pos + turret.direction * 46
+
+			-- FLASH BANG
+			local particleImage = love.graphics.newImage("/graphics/particle.png")
+			local p = love.graphics.newParticleSystem(particleImage, 255)
+			local emitRate = 1 / turret.fireRate
+			p:setEmissionRate(emitRate)
+			p:setParticleLifetime(.05)
+			p:setSizes(3.2)
+			p:setSizeVariation(0)
+			p:setRotation(0)
+			p:setColors({255, 240, 240, 210}, {255, 255, 255, 10})
+			p:stop()
+			turret.flashBangParticle = p
 		end
 		self.__index = self
 		setmetatable(turret, self)
@@ -413,13 +427,16 @@ Turret = Object:new({class = "Turret"})
 
 	function Turret:update(dt)
 
+		self.flashBangParticle:update(dt)
+		self.flashBangParticle:start()
+
 		-- update the position
 		if (self.targetPos - self.pos):norm() > 1 then
 
 			-- find velocity direction, multiply by velocity scalar.
 			direction = (self.targetPos - self.pos)
 			self.direction = direction:normalize()
-			velocity = self.direction * self.velScalar
+			local velocity = self.direction * self.velScalar
 
 			self.pos = self.pos + velocity * dt
 
@@ -440,7 +457,7 @@ Turret = Object:new({class = "Turret"})
 
 			if self.bulletLevel == 1 then
 
-				bullet = Bullet:new(turret_middle + turret_to_player * 46, velocity, 10, 10, "enemy")
+				bullet = Bullet:new(self.turretEnd, velocity, 10, 10, "enemy")
 				table.insert(game.entities, bullet)
 
 			end
@@ -453,7 +470,7 @@ Turret = Object:new({class = "Turret"})
 				for i = 1, 11 do
 
 					velocity = velocity:rotate(math.pi / (variance + 11))
-					bullet = Bullet:new(turret_middle + turret_to_player * 46, velocity, 10, 10, "enemy")
+					bullet = Bullet:new(self.turretEnd, velocity, 10, 10, "enemy")
 					table.insert(game.entities, bullet)
 
 				end
@@ -476,6 +493,10 @@ Turret = Object:new({class = "Turret"})
 
 	function Turret:draw()
 
+		-- flash bang
+		love.graphics.draw(self.flashBangParticle, self.turretEnd.x, self.turretEnd.y)
+
+
 		-- draw the tank
 		tankAngle = self.direction:angle()
 		love.graphics.draw(self.image, self.pos.x, self.pos.y, tankAngle, 1, 1, self.width/2, self.height/2)
@@ -487,7 +508,9 @@ Turret = Object:new({class = "Turret"})
 		turret_to_player = (turret_to_player * (1/turret_to_player:norm()))
 
 		turretAngle = turret_to_player:angle()
+		self.turretEnd = self.pos + turret_to_player * 46
 		love.graphics.draw(self.turretImage, self.pos.x, self.pos.y, turretAngle, 1, 1, 8, 8)
+
 	end
 
 -- First Boss
