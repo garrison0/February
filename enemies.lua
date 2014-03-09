@@ -493,10 +493,11 @@ Turret = Object:new({class = "Turret"})
 -- First Boss
 Boss = Object:new({class = "Boss"})
 
-	function Boss:new(pos, vel, width, height, health, fireDelay, target)
+	function Boss:new(pos, posTarget, vel, width, height, health, fireDelay, target)
 
 		local boss = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
+			posTarget = posTarget or Vector:new(50, 50),
 			health = health or 0, width = width or 0, height = height or 0,
 			fireRate = fireDelay or .5, fireDelay = fireDelay or .5,
 			phase = 1, target = target
@@ -509,51 +510,69 @@ Boss = Object:new({class = "Boss"})
 
 	function Boss:update(dt)
 
-		self.target = game.player
-		
-		self.pos = self.pos + self.vel * dt
+		-- approached the position yet? (introduces the boss normally)
+		if not self.reachedTarget then
+			if (self.posTarget - self.pos):norm() > 5 then
 
-		if self.pos.x + self.width > game.width - 10 or self.pos.x < 10 then
-			self.vel.x = self.vel.x * -1
-		end
+				-- travel towards it
+				local vel = (self.posTarget - self.pos):normalize()
+				local VEL_SCALAR = 75
+				local vel = vel * VEL_SCALAR
+				self.pos = self.pos + vel * dt
 
-		self.fireDelay = self.fireDelay - dt
+			else
+				self.reachedTarget = true
+			end
+		else
+			self.target = game.player
+			
+			self.pos = self.pos + self.vel * dt
 
-		self.pos = self.pos + self.vel * dt
-
-		-- gun points
-		local p7 = Vector:new(self.pos.x + 3 * self.width / 4, self.pos.y + self.height + 25)
-		local p8 = Vector:new(self.pos.x + self.width / 4, self.pos.y + self.height + 25)
-		points = {p7, p8}
-
-		if self.fireDelay <= 0 then
-
-			for i = 1, 2 do
-
-				player_middle = Vector:new(self.target.pos.x + self.target.width / 2, self.target.pos.y + self.target.height / 2)
-
-				-- add self.target velocities to be cheeky 
-				variance = (6 * math.random(0, 400) / math.sqrt(self.target.vel:norm()))
-
-				player_middle.x = player_middle.x + variance *((self.target.vel.x * dt * -self.target.a)
-												  + (self.target.vel.x * dt * self.target.d))
-
-				player_middle.y = player_middle.y + variance *((self.target.vel.y * dt * -self.target.w)
-												  + (self.target.vel.y * dt * self.target.s))
-
-				gun_to_player = (player_middle - points[i])
-				gun_to_player = (gun_to_player * (1 / gun_to_player:norm()))
-
-				velocity = gun_to_player * 400
-				velocity.y = -1 * velocity.y
-
-				bullet = Bullet:new(points[i], velocity, 10, 10, "enemy")
-				table.insert(game.entities, bullet)
-
+			if self.pos.x + self.width > game.width - 10 or self.pos.x < 10 then
+				self.vel.x = self.vel.x * -1
 			end
 
-			self.fireDelay = self.fireRate
+			self.fireDelay = self.fireDelay - dt
 
+			self.pos = self.pos + self.vel * dt
+
+			-- gun points
+			local p7 = Vector:new(self.pos.x + 3 * self.width / 4, self.pos.y + self.height + 25)
+			local p8 = Vector:new(self.pos.x + self.width / 4, self.pos.y + self.height + 25)
+			points = {p7, p8}
+
+			if self.fireDelay <= 0 then
+
+				for i = 1, 2 do
+
+					player_middle = Vector:new(self.target.pos.x + self.target.width / 2, self.target.pos.y + self.target.height / 2)
+
+					-- add self.target velocities to be cheeky 
+					local vel = Vector:new(self.target.vel.x, self.target.vel.y)
+					variance = (4 * math.random(0, 400) / math.sqrt(vel:norm()))
+
+					player_middle.x = player_middle.x + variance *((vel.x * dt * -self.target.a)
+													  + (vel.x * dt * self.target.d))
+													  + math.random(-25, 25)
+
+					player_middle.y = player_middle.y + variance *((vel.y * dt * -self.target.w)
+													  + (vel.y * dt * self.target.s))
+													  + math.random(-25, 25)
+
+					gun_to_player = (player_middle - points[i])
+					gun_to_player = (gun_to_player * (1 / gun_to_player:norm()))
+
+					velocity = gun_to_player * 400
+					velocity.y = -1 * velocity.y
+
+					bullet = Bullet:new(points[i], velocity, 10, 10, "enemy")
+					table.insert(game.entities, bullet)
+
+				end
+
+				self.fireDelay = self.fireRate
+
+			end
 		end
 	end
 

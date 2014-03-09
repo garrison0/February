@@ -23,7 +23,7 @@ Game = Object:new({class = "Game"})
 		game.levelData = {}
 
 		-- UI stuff. Don't mind me ^^'
-		game.livesGraphic = love.graphics.newImage("/graphics/1up.png")
+		game.livesGraphic = love.graphics.newImage("/graphics/1up2.png")
 		game.playerGraphic = love.graphics.newImage("/graphics/ship.png")
 
 		setmetatable(game, self)
@@ -67,6 +67,7 @@ Game = Object:new({class = "Game"})
 			-- load initial level 1 things
 			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
 			game.player = player
+			game.player.particleSystem:start()
 			game.playerLives = 3
 			table.insert(self.entities, player)
 
@@ -99,7 +100,7 @@ Game = Object:new({class = "Game"})
 				else
 
 					-- check to move on / else continue with trigger actions, etc
-					self:checkTrigger(k)
+					self:checkTrigger(k, dt)
 				end
 			end
 		end
@@ -182,16 +183,15 @@ Game = Object:new({class = "Game"})
 
 			if trigger == "boss" then
 
-				-- spawn boss
-				boss = Boss:new(Vector:new(25, 25), Vector:new(50,0), 600, 150, 2500, .05, game.player)
-				table.insert(self.entities, boss)
+				-- to delay his spawning
+				self.levelData.delayTime = 3
 
 			end
 		end
 	end
 
 	-- decides whether trigger conditions are complete
-	function Game:checkTrigger(trigger)
+	function Game:checkTrigger(trigger, dt)
 
 		-- menu triggers
 		if self.state == "menu" then
@@ -244,18 +244,38 @@ Game = Object:new({class = "Game"})
 
 			if trigger == "boss" then
 
-				boss = {}
-				for k,v in pairs(self.entities) do
-					if v.class == "Boss" then
-						table.insert(boss, v) 
+				-- trigger still needs delayed
+				if self.levelData.delayTime ~= nil then
+
+					if self.levelData.delayTime > 0 then
+
+						self.levelData.delayTime = self.levelData.delayTime - dt
+
+					elseif self.levelData.delayTime < 0 then
+
+						-- spawn boss
+						boss = Boss:new(Vector:new(50, -150), Vector:new(50, 25), Vector:new(50,0), 600, 150, 2500, .05, game.player)
+						table.insert(self.entities, boss)
+
+						self.levelData.delayTime = nil
+
 					end
 				end
-				if boss[1] == nil then
 
-					self.state = "menu"
-					self.stateNotLoaded = true
-					self.triggerNotLoaded = true
+				if self.levelData.delayTime == nil then
+					boss = {}
+					for k,v in pairs(self.entities) do
+						if v.class == "Boss" then
+							table.insert(boss, v) 
+						end
+					end
+					if boss[1] == nil then
 
+						self.state = "menu"
+						self.stateNotLoaded = true
+						self.triggerNotLoaded = true
+
+					end
 				end
 			end
 		end
@@ -311,9 +331,9 @@ Game = Object:new({class = "Game"})
 		if(a.class == "Player") then
 
 			-- vs. boss, enemy, etc.
-			if(b.class == "Enemy") or (b.class == "Boss") then
+			if(b.class == "Enemy") or (b.class == "Boss") or (b.class == "Turret") then
 				-- mark player to die
-				if not b.invul_ then
+				if not a.invul_ then
 					a.isDead_ = true
 				end
 			end

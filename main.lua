@@ -34,11 +34,12 @@ function love.load()
 	game = Game:new("menu", 800, 700, false)
 
 	-- set state to access test
-	-- game.state = "test"
+	game.state = "test"
 
 end
 
 function love.update(dt)
+	if game.isPaused then return end
 
 	-- update the game (triggers, level, etc)
 	game:update(dt)
@@ -105,63 +106,6 @@ function love.update(dt)
 			end
 		end
 	end
-
-	-- 	-- to test things
-	-- 	if test_wave == true and game.stateNotLoaded == true then
-
-	-- 		-- spawn a few seeking enemies
-	-- 		-- for i = 1, 10 do
-
-	-- 		-- 	if i % 10 == 0 then 
-	-- 		-- 		-- this guy goes "fuck the poliss" and makes it interesting
-	-- 		-- 		wanderer = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
-	-- 		-- 							   4, 500, 0, "wandering")
-	-- 		-- 		table.insert(enemies, wanderer)
-	-- 		-- 	end
-	-- 		-- 	flocker = SteeringEnemy:new(5, 10, Vector:new(math.random(50, 700), math.random(50, 600)), Vector:new(math.random(-200, 200), math.random(-200, 200)),
-	-- 		-- 							   4, 400, 0, "flock")
-	-- 		-- 	table.insert(enemies, flocker)
-
-	-- 		-- end
-	-- 		bossTwo = BossTwo:new(Vector:new(400, 250), 200, 0, Vector:new(150, 150))
-	-- 		table.insert(game.entities, bossTwo)
-
-	-- 		-- make some obstacles
-			-- obstacleOne = CircleObstacle:new(Vector:new(0, 0), 100)
-			-- obstacleTwo = CircleObstacle:new(Vector:new(game.width, 0), 100)
-			-- obstacleThree = CircleObstacle:new(Vector:new(game.width, game.height), 120)
-			-- obstacleFour = CircleObstacle:new(Vector:new(0, game.height), 100)
-			-- obstacleFive = CircleObstacle:new(Vector:new(215, 245), 100)
-			-- obstacleSix = CircleObstacle:new(Vector:new(500, 500), 130)
-			-- obstacleSeven = CircleObstacle:new(Vector:new(570, 210), 60)
-			-- obstacleEight = CircleObstacle:new(Vector:new(375, 100), 70)
-			-- obstacleNine = CircleObstacle:new(Vector:new(720, 495), 30)
-			-- obstacleTen = CircleObstacle:new(Vector:new(750, 220), 30)
-			-- obstacle11 = CircleObstacle:new(Vector:new(190, 480), 40)
-			-- obstacle12 = CircleObstacle:new(Vector:new(190, 590), 20)
-
-			-- table.insert(game.entities, obstacleOne)
-			-- table.insert(game.entities, obstacleTwo)
-			-- table.insert(game.entities, obstacleThree)
-			-- table.insert(game.entities, obstacleFour)
-			-- table.insert(game.entities, obstacleFive)
-			-- table.insert(game.entities, obstacleSix)
-			-- table.insert(game.entities, obstacleSeven)
-			-- table.insert(game.entities, obstacleEight)
-			-- table.insert(game.entities, obstacleNine)
-			-- table.insert(game.entities, obstacleTen)
-			-- table.insert(game.entities, obstacle11)
-			-- table.insert(game.entities, obstacle12)
-
-	-- 		-- -- the avoiding AI
-	-- 		-- avoider = SteeringEnemy:new(5, 10, Vector:new(400, 500), Vector:new(math.random(-200, 200), math.random(-200, 200)),
-	-- 		--  							   8, 400, 0, "obstacleAvoidance")
-
-	-- 		-- table.insert(enemies, avoider)
-	-- 		game.stateNotLoaded = false
-
-	-- 	end
-	--end
 end
 
 -- input
@@ -170,6 +114,10 @@ function love.keypressed(key)
 	if not(game.state == "menu") and not(game.state == "pause") then
 		game.player[key] = 1 -- Set key flag pressed
 		print(key .. " " .. game.player[key])
+	end
+
+	if key == "return" then
+		game.isPaused = not game.isPaused
 	end
 end
 
@@ -220,6 +168,11 @@ function love.mousereleased(x, y, button)
 	end
 end
 
+-- screen focus
+function love.focus(f) 
+	game.isPaused = not f 
+end
+
 function love.draw()
 
 	if game.state == "menu" then
@@ -240,7 +193,7 @@ function love.draw()
 	    -- UI
 	    fps = love.timer.getFPS()
 	    -- lives
-	    love.graphics.draw(game.livesGraphic, 25, 25, 0, 1, .8, 12, 12)
+	    love.graphics.draw(game.livesGraphic, 45, 25, 0, 1, .9, 12, 12)
 	    local count = game.playerLives
 	    local x_iter = 15
 	    if count ~= nil then

@@ -15,7 +15,46 @@ Player = Object:new({class = "Player"})
 			invul_ = invul_ or false, invulTime = 3, currentInvul = 0,
 			image = love.graphics.newImage("/graphics/ship.png")
 		})
-		setmetatable(player,self)
+		-- PARTICLE SYSTEM : ROCKET FIRE
+		local particleImage = love.graphics.newImage("/graphics/particle.png")
+		local p = love.graphics.newParticleSystem(particleImage, 255)
+		p:setEmissionRate(100)
+		p:setParticleLifetime(.25)
+		p:setDirection(math.pi/2)
+		p:setSpread(.2)
+		p:setSpeed(50)
+		p:setRadialAcceleration(10)
+		p:setTangentialAcceleration(0)
+		p:setSizes(.6, .01)
+		p:setSizeVariation(.2)
+		p:setRotation(0)
+		p:setSpin(0)
+		p:setSpinVariation(0)
+		p:setColors({242, 51, 51, 220}, {237, 218, 200, 10})
+		p:stop()
+		player.leftRocketParticles = p
+		player.rightRocketParticles = p
+
+		-- PARTICLE SYSTEM : FLASH BANG
+		local particleImage = love.graphics.newImage("/graphics/particle.png")
+		local p = love.graphics.newParticleSystem(particleImage, 255)
+		p:setEmissionRate(5)
+		p:setParticleLifetime(.1)
+		p:setDirection(0)
+		p:setSpread(0)
+		p:setSpeed(0)
+		--p:setRadialAcceleration(0)
+		--p:setTangentialAcceleration(0)
+		p:setSizes(1.6)
+		p:setSizeVariation(0)
+		p:setRotation(0)
+		p:setSpin(0)
+		p:setSpinVariation(0)
+		p:setColors({255, 240, 240, 140}, {237, 213, 157, 80})
+		--p:stop()
+		player.flashBangParticle = p
+
+		setmetatable(player, self)
 		self.__index = self
 		return player
 	end
@@ -30,11 +69,22 @@ Player = Object:new({class = "Player"})
 
 	function Player:draw()
 
+		love.graphics.draw(self.flashBangParticle, self.pos.x + 15, self.pos.y)
 		love.graphics.draw(self.image, self.pos.x, self.pos.y)
+		love.graphics.draw(self.leftRocketParticles, self.pos.x + 24, self.pos.y + self.height)
+		love.graphics.draw(self.rightRocketParticles, self.pos.x + 6, self.pos.y + self.height)
 
 	end
 
 	function Player:update(dt)
+
+		-- update particle systems
+		self.leftRocketParticles:start()
+		self.leftRocketParticles:update(dt) 
+		self.rightRocketParticles:start()
+		self.rightRocketParticles:update(dt) 
+		self.flashBangParticle:update(dt)
+		if self.shooting then self.flashBangParticle:start() else self.flashBangParticle:stop() end
 
 		-- update flag (used in laser)
 		if self.a ~= 0 or self.s ~= 0 or self.d ~= 0 or self.w ~= 0 then 
@@ -121,11 +171,13 @@ Player = Object:new({class = "Player"})
 	function Player:shoot()
 		-- level 1
 		if (self.bulletLevel == 1) then
-			bullet = Bullet:new(Vector:new(self.pos.x + 3 * self.width/4 - 4, self.pos.y), 
-										Vector:new(0,1000), 1, 8, "player")
+			local firstX = self.pos.x + (self.width/2 - 3) - 4 
+			local secondX = self.pos.x + (self.width/2 - 3) + 4
+			bullet = Bullet:new(Vector:new(firstX, self.pos.y - 8), 
+										Vector:new(0, 750), 1, 8, "player")
 
-			bullet2 = Bullet:new(Vector:new(self.pos.x + 1 * self.width/4 - 4, self.pos.y), 
-										Vector:new(0,1000), 1, 8, "player")
+			bullet2 = Bullet:new(Vector:new(secondX, self.pos.y - 8), 
+										Vector:new(0, 750), 1, 8, "player")
 
 			self.fire_delay = .2
 			table.insert(game.entities, bullet)
