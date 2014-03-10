@@ -62,17 +62,13 @@ Enemy = Object:new({class = "Enemy"})
 
 				self.pos.y = self.pos.y + self.vel.y * dt
 
-				if self.pos.y >= self.maxDepth then
+				if self.pos.y >= self.minDepth then
 
 					self.pathingPhase = 1
 					-- update velocity according to turn direction
-					if self.turningDirection == "right" then
+					if self.turningDirection == "left" then
 
-						self.vel = Vector:new(self.vel.x, -self.vel.y)
-
-					elseif self.turningDirection == "left" then
-
-						self.vel = -1 * self.vel
+						self.vel = Vector:new(-self.vel.x, self.vel.y)
 
 					end
 				end
@@ -83,7 +79,7 @@ Enemy = Object:new({class = "Enemy"})
 
 				self.pos = self.pos + self.vel * dt
 
-				if self.pos.y <= self.minDepth then
+				if self.pos.y >= self.maxDepth then
 
 					self.pathingPhase = 2
 
@@ -92,7 +88,7 @@ Enemy = Object:new({class = "Enemy"})
 
 			if self.pathingPhase == 2 then
 
-				self.vel = Vector:new(0, -self.vel.y)
+				self.vel = Vector:new(0, self.vel.y)
 				self.pathingType = "standard"
 
 			end
@@ -405,7 +401,7 @@ Turret = Object:new({class = "Turret"})
 			turret.height = 46
 			turret.image = love.graphics.newImage("/graphics/turretTank.png")
 			turret.turretImage = love.graphics.newImage("/graphics/tankTurret.png")
-			direction = (turret.targetPos - turret.pos)
+			local direction = (turret.targetPos - turret.pos)
 			turret.direction = direction:normalize()
 			turret.turretEnd = turret.pos + turret.direction * 46
 
@@ -455,36 +451,40 @@ Turret = Object:new({class = "Turret"})
 
 			-- fire at the player depending upon bulletLevel
 			player_middle = Vector:new(game.player.pos.x + game.player.width / 2, game.player.pos.y + game.player.height / 2)
-			turret_middle = self.pos
+			turret_middle = Vector:new(self.pos.x + self.width/2, self.pos.y + self.height/2)
 			turret_to_player = (player_middle - turret_middle)
-			turret_to_player = (turret_to_player * (1/turret_to_player:norm()))
+			turret_to_player = turret_to_player:normalize()
+			turret_to_player.y = turret_to_player.y * -1
 
-			velocity = turret_to_player * 200
-			velocity.y = velocity.y * -1
+			self:shoot(turret_to_player)
 
-			if self.bulletLevel == 1 then
+		end
+	end
 
+	function Turret:shoot(direction)
+
+		if self.bulletLevel == 1 then
+
+			velocity = direction * 200
+			bullet = Bullet:new(self.turretEnd, velocity, 10, 10, "enemy")
+			table.insert(game.entities, bullet)
+
+		elseif self.bulletLevel == 2 then
+
+			for i = 1, 7 do
+
+				velocity = direction * math.random(150, 200)
+				spread = .3
+				angle = math.random(-spread, spread)
+				bulletVelocity = velocity:rotate(angle)
 				bullet = Bullet:new(self.turretEnd, velocity, 10, 10, "enemy")
 				table.insert(game.entities, bullet)
 
 			end
-
-			if self.bulletLevel == 9 then
-
-				velocity = velocity:rotate(-math.pi / 2)
-				variance = math.random(-1, 1)
-
-				for i = 1, 11 do
-
-					velocity = velocity:rotate(math.pi / (variance + 11))
-					bullet = Bullet:new(self.turretEnd, velocity, 10, 10, "enemy")
-					table.insert(game.entities, bullet)
-
-				end
-			end
-
-			self.fireDelay = self.fireRate
 		end
+
+		self.fireDelay = self.fireRate
+
 	end
 
 	function Turret:collision()

@@ -40,7 +40,7 @@ Player = Object:new({class = "Player"})
 		local p = love.graphics.newParticleSystem(particleImage, 255)
 		local emitRate = 1 / player.fire_delay
 		p:setEmissionRate(emitRate)
-		p:setParticleLifetime(1 / 35)
+		p:setParticleLifetime(1 / 30)
 		p:setSizes(2.5)
 		p:setSizeVariation(0)
 		p:setColors({255, 247, 247, 140}, {255, 240, 240, 10})
@@ -62,7 +62,7 @@ Player = Object:new({class = "Player"})
 
 	function Player:draw()
 
-		love.graphics.draw(self.flashBangParticle, self.pos.x + 15, self.pos.y)
+		love.graphics.draw(self.flashBangParticle, self.pos.x + 15, self.pos.y - 8)
 		love.graphics.draw(self.image, self.pos.x, self.pos.y)
 		love.graphics.draw(self.leftRocketParticles, self.pos.x + 24, self.pos.y + self.height)
 		love.graphics.draw(self.rightRocketParticles, self.pos.x + 6, self.pos.y + self.height)
