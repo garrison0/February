@@ -429,12 +429,18 @@ Turret = Object:new({class = "Turret"})
 
 	function Turret:update(dt)
 
+		-- for i,v in pairs(game.entities) do
+		-- 	if v.class == "Bullet" then print(v.pos) end
+		-- end
+
 		if not self.isTweened then
 			-- POSITION TWEEN
-			tween(55, self.posTweenTable,
+			tween(20, self.posTweenTable,
 					  self.targetTweenTable, "inOutQuad")
 			self.isTweened = true
 		end
+
+		self.direction = (turret.targetPos - turret.pos):normalize()
 
 		self.pos.x = self.posTweenTable.x
 		self.pos.y = self.posTweenTable.y
@@ -463,21 +469,34 @@ Turret = Object:new({class = "Turret"})
 
 	function Turret:shoot(direction)
 
+		bulletPosition = self.turretEnd
+
 		if self.bulletLevel == 1 then
 
 			velocity = direction * 200
-			bullet = Bullet:new(self.turretEnd, velocity, 10, 10, "enemy")
+			bullet = Bullet:new(bulletPosition, velocity, 10, 10, "enemy")
 			table.insert(game.entities, bullet)
 
-		elseif self.bulletLevel == 2 then
+		end
+		
+		if self.bulletLevel == 2 then
+
+			-- lua has the most pain in the ass standard lib. random i've ever fucking witnessed
+			math.randomseed(os.time())
+			math.random(); math.random(); math.random()
 
 			for i = 1, 7 do
 
-				velocity = direction * math.random(150, 200)
-				spread = .3
-				angle = math.random(-spread, spread)
+				spread = .1
+				if math.random(0, 1) == 1 then 
+					angle = math.random() * spread
+				else
+					angle = math.random() * -spread
+				end
+
+				velocity = direction * math.random(175, 200)
 				bulletVelocity = velocity:rotate(angle)
-				bullet = Bullet:new(self.turretEnd, velocity, 10, 10, "enemy")
+				local bullet = Bullet:new(bulletPosition + math.random(-1, 1), bulletVelocity + math.random(-1, 1), 10, 10, "enemy")
 				table.insert(game.entities, bullet)
 
 			end

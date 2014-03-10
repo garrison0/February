@@ -178,7 +178,7 @@ Game = Object:new({class = "Game"})
 				end
 
 				-- mean, scarey turret
-				turret = Turret:new(Vector:new(490, -30), Vector:new(600, 300), 50, .8, 2, 350, "tank")
+				local turret = Turret:new(Vector:new(350, -50), Vector:new(600, 300), 50, .8, 2, 350, "tank")
 				table.insert(self.entities, turret)
 
 			end
@@ -490,7 +490,7 @@ Bullet = Object:new({class = "Bullet"})
 
 		self.life = self.life - dt;
 		self.pos.y = self.pos.y - self.vel.y * dt
-		self.pos.x = self.pos.x + (self.vel.x or 0) * dt
+		self.pos.x = self.pos.x + self.vel.x * dt
 
 		-- too far off screen? go away!
 		if self.pos.x > game.width + 25 or self.pos.x < -25 or self.pos.y > game.height + 25 or self.pos.y < -25 then
