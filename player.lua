@@ -40,7 +40,7 @@ Player = Object:new({class = "Player"})
 		local p = love.graphics.newParticleSystem(particleImage, 255)
 		local emitRate = 1 / player.fire_delay
 		p:setEmissionRate(emitRate)
-		p:setParticleLifetime(.05)
+		p:setParticleLifetime(1 / 35)
 		p:setSizes(2.5)
 		p:setSizeVariation(0)
 		p:setColors({255, 247, 247, 140}, {255, 240, 240, 10})

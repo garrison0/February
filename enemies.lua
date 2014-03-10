@@ -1,5 +1,6 @@
 require "object"
 require "physics"
+tween = require "tween"
 
 -- generic moving enemy
 Enemy = Object:new({class = "Enemy"})
@@ -397,8 +398,9 @@ Turret = Object:new({class = "Turret"})
 				  velScalar = velScalar or 50, turretType = turretType or "tank",
 				  fireDelay = fireDelay or 1, fireRate = fireDelay or 1, 
 				  bulletLevel = bulletLevel or 1, health = health or 100, life = life or 20,
-				  })
+				  isTweened = false})
 		if turret.turretType == "tank" then
+			-- "tank" specific parameters
 			turret.width = 56
 			turret.height = 46
 			turret.image = love.graphics.newImage("/graphics/turretTank.png")
@@ -407,16 +409,20 @@ Turret = Object:new({class = "Turret"})
 			turret.direction = direction:normalize()
 			turret.turretEnd = turret.pos + turret.direction * 46
 
+			-- for tweening... it works, ok?
+			turret.posTweenTable = {x = pos.x, y = pos.y}
+			turret.targetTweenTable = {x = targetPos.x, y = targetPos.y}
+
 			-- FLASH BANG
 			local particleImage = love.graphics.newImage("/graphics/particle.png")
 			local p = love.graphics.newParticleSystem(particleImage, 255)
 			local emitRate = 1 / turret.fireRate
 			p:setEmissionRate(emitRate)
-			p:setParticleLifetime(.05)
+			p:setParticleLifetime(.03)
 			p:setSizes(3.2)
 			p:setSizeVariation(0)
 			p:setRotation(0)
-			p:setColors({255, 240, 240, 210}, {255, 255, 255, 10})
+			p:setColors({255, 255, 255, 210}, {255, 240, 240, 10})
 			p:stop()
 			turret.flashBangParticle = p
 		end
@@ -427,20 +433,21 @@ Turret = Object:new({class = "Turret"})
 
 	function Turret:update(dt)
 
+		if not self.isTweened then
+			-- POSITION TWEEN
+			tween(55, self.posTweenTable,
+					  self.targetTweenTable, "inOutQuad")
+			self.isTweened = true
+		end
+
+		self.pos.x = self.posTweenTable.x
+		self.pos.y = self.posTweenTable.y
+
 		self.flashBangParticle:update(dt)
 		self.flashBangParticle:start()
 
-		-- update the position
-		if (self.targetPos - self.pos):norm() > 1 then
-
-			-- find velocity direction, multiply by velocity scalar.
-			direction = (self.targetPos - self.pos)
-			self.direction = direction:normalize()
-			local velocity = self.direction * self.velScalar
-
-			self.pos = self.pos + velocity * dt
-
-		end
+		-- update the position tweening
+		tween.update(dt)
 
 		self.fireDelay = self.fireDelay - dt
 

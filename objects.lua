@@ -119,6 +119,8 @@ Game = Object:new({class = "Game"})
 		if self.state == "level1" then
 			
 			if trigger == "wave1" then
+
+				halfWidth = game.width / 2
 				-- spawn enemies
 				for i = 1, 7 do
 					x_iter = 95 * i
@@ -128,10 +130,11 @@ Game = Object:new({class = "Game"})
 				end
 
 				-- spawn turrets
-				for i = 1, 5 do
-					x_iter = i * 125
-					pos = Vector:new(x_iter, -100)
-					targetPos = Vector:new(pos.x, pos.y + 200)
+				for i = 1, 6 do
+					x_iter = 67 + (i - 1) * game.width/6
+					y_iter = math.abs(x_iter - halfWidth) - halfWidth
+					local pos = Vector:new(x_iter, y_iter)
+					targetPos = Vector:new(pos.x, pos.y + 450)
 					turret = Turret:new(pos, targetPos, 50, .4, 1, 100)
 					table.insert(self.entities, turret)
 				end		
@@ -175,7 +178,7 @@ Game = Object:new({class = "Game"})
 				end
 
 				-- mean, scarey turret
-				turret = Turret:new(Vector:new(100, -50), Vector:new(500, 50), 50, 1, 9, 350)
+				turret = Turret:new(Vector:new(100, -50), Vector:new(500, 500), 50, 1, 9, 350)
 				table.insert(self.entities, turret)
 
 			end
@@ -489,8 +492,8 @@ Bullet = Object:new({class = "Bullet"})
 		self.pos.y = self.pos.y - self.vel.y * dt
 		self.pos.x = self.pos.x + (self.vel.x or 0) * dt
 
-		-- off screen? to go away!
-		if self.pos.x > game.width or self.pos.x < 0 or self.pos.y > game.height or self.pos.y < 0 then
+		-- too far off screen? go away!
+		if self.pos.x > game.width + 25 or self.pos.x < -25 or self.pos.y > game.height + 25 or self.pos.y < -25 then
 			self.isDead_ = true
 		end 
 
