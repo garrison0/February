@@ -13,7 +13,6 @@ Player = Object:new({class = "Player"})
 			isChargingLaser = false, chargeLength = 1.5,
 			currentCharge = 0, isDead_ = false,
 			invul_ = invul_ or false, invulTime = 3, currentInvul = 0,
-			image = love.graphics.newImage("/graphics/ship.png")
 		})
 		-- PARTICLE SYSTEM : ROCKET FIRE
 		local particleImage = love.graphics.newImage("/graphics/particle.png")
@@ -47,6 +46,19 @@ Player = Object:new({class = "Player"})
 		p:stop()
 		player.flashBangParticle = p
 
+		-- ANIMATION
+		player.animation = {}
+		player.animation.middle = love.graphics.newImage("/graphics/ship.png")
+		player.animation.left1 = love.graphics.newImage("/graphics/shipLeft1.png")
+		player.animation.right1 = love.graphics.newImage("/graphics/shipRight1.png")
+		player.animation.delayTime = 0
+		player.frame = 1
+		player.image = player.animation.middle
+
+		-- AUDIO
+		player.shootSound = love.audio.newSource("/audio/playerShot.wav", "static")
+		player.shootSound:setVolume(1)
+
 		setmetatable(player, self)
 		self.__index = self
 		return player
@@ -79,9 +91,40 @@ Player = Object:new({class = "Player"})
 		self.flashBangParticle:update(dt)
 		if self.shooting then self.flashBangParticle:start() else self.flashBangParticle:stop() end
 
+		-- update animation
+		if self.isMovingX then
+			-- rolling right?
+			if self.isMovingRight then
+				self:animate(dt, "right")
+			end
+			-- rolling left?
+			if self.isMovingLeft then
+				self:animate(dt, "left")
+			end
+			-- idling? -- move back to middle
+			if not self.isMoving then
+				self:animate(dt, "idle")
+			end
+		end
+
+		if self.a == 1 then 
+			self.isMovingRight = false
+			self.isMovingLeft = true
+		else
+			self.isMovingLeft = false
+		end
+
+
+		if self.d == 1 then 
+			self.isMovingLeft = false
+			self.isMovingRight = true
+		else
+			self.isMovingRight = false
+		end
+
 		-- update flag (used in laser)
-		if self.a ~= 0 or self.s ~= 0 or self.d ~= 0 or self.w ~= 0 then 
-			self.isMovingY = true; self.isMovingX = true else self.isMoving = false 
+		if self.a ~= 0 or self.d ~= 0 or self.s ~= 0 or self.w ~= 0 then 
+			self.isMoving = true; self.isMovingX = true; self.isMovingY = true else self.isMoving = false 
 		end
 
 		-- invulnerability (spawning)
@@ -161,7 +204,66 @@ Player = Object:new({class = "Player"})
 		end
 	end
 
+	-- direction : rolling left or right? determined in update
+	function Player:animate(dt, direction)
+
+		local MIDDLE_TO_LEFT = .2
+		local MIDDLE_TO_RIGHT = .2
+		local LEFT_TO_MIDDLE = .3
+		local RIGHT_TO_MIDDLE = .3
+		local function moveOn(player, time)
+			if player.animation.delayTime > time then
+				player.animation.delayTime = 0
+				return true
+			end
+		end
+
+		-- To delay frame changes.
+		self.animation.delayTime = self.animation.delayTime + dt
+
+		-- FRAME 1 = MIDDLE POSITION : animation.middle
+		-- FRAME 2 = FIRST LEFT ROLL : animation.left1
+		-- FRAME 3 = FIRST RIGHT ROLL: animation.right1
+
+		-- MIDDLE POSITION -> FIRST LEFT ROLL
+		if self.frame == 1 and direction == "left" then
+			if moveOn(self, MIDDLE_TO_LEFT) then
+				self.frame = 2
+				self.image = self.animation.left1
+			end
+		end
+
+		-- MIDDLE POSITION -> FIRST RIGHT ROLL
+		if self.frame == 1 and direction == "right" then
+			if moveOn(self, MIDDLE_TO_RIGHT) then
+				print(self.animation.delayTime)
+				self.frame = 3
+				self.image = self.animation.right1
+			end
+		end
+
+		-- FIRST LEFT ROLL -> MIDDLE POSITION
+		if self.frame == 2 and (direction == "right" or direction == "idle") then 
+			if moveOn(self, LEFT_TO_MIDDLE) then
+				self.frame = 1
+				self.image = self.animation.middle
+			end
+		end 
+
+		-- FIRST RIGHT ROLL -> MIDDLE POSITION
+		if self.frame == 3 and (direction == "left" or direction == "idle") then
+			if moveOn(self, RIGHT_TO_MIDDLE) then
+				self.frame = 1
+				self.image = self.animation.middle
+			end
+		end
+	end
+
 	function Player:shoot()
+		-- audio
+		self.shootSound:rewind()
+		self.shootSound:play()
+
 		-- level 1
 		if (self.bulletLevel == 1) then
 			local firstX = self.pos.x + (self.width/2 - 3) - 4 

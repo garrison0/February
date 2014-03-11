@@ -12,6 +12,9 @@ Enemy = Object:new({class = "Enemy"})
 			health = 5, life = 12, width = 32, height = 32
 		})
 
+		-- graphics
+		enemy.image = love.graphics.newImage("/graphics/genericShip.png")
+
 		-- special parameters for this pathing type
 		if pathingType == "z-shape" then
 
@@ -21,6 +24,25 @@ Enemy = Object:new({class = "Enemy"})
 			enemy.pathingPhase = 0
 
 		end
+
+		-- PARTICLE SYSTEM : ROCKET FIRE
+		local particleImage = love.graphics.newImage("/graphics/particle.png")
+		local p = love.graphics.newParticleSystem(particleImage, 255)
+		p:setEmissionRate(120)
+		p:setParticleLifetime(.25)
+		p:setDirection(-math.pi/2)
+		p:setSpread(.15)
+		p:setSpeed(50)
+		p:setRadialAcceleration(10)
+		p:setTangentialAcceleration(0)
+		p:setSizes(.9, .01)
+		p:setSizeVariation(.3)
+		p:setRotation(0)
+		p:setSpin(0)
+		p:setSpinVariation(0)
+		p:setColors({242, 51, 51, 220}, {237, 218, 200, 10})
+		p:stop()
+		enemy.rocketParticles = p
 
 		setmetatable(enemy,self)
 		self.__index = self
@@ -37,6 +59,10 @@ Enemy = Object:new({class = "Enemy"})
 	end
 
 	function Enemy:update(dt)
+
+		-- update particle system
+		self.rocketParticles:update(dt)
+		self.rocketParticles:start()
 
 		-- update life
 		self.life = self.life - dt
@@ -97,7 +123,10 @@ Enemy = Object:new({class = "Enemy"})
 
 	function Enemy:draw()
 
-		love.graphics.polygon("line", {self.pos.x, self.pos.y, self.pos.x + 32, self.pos.y, self.pos.x + 16, self.pos.y + 32})
+		-- particles
+		love.graphics.draw(self.rocketParticles, self.pos.x + 14, self.pos.y)
+		-- ship
+		love.graphics.draw(self.image, self.pos.x, self.pos.y)
 
 	end
 
@@ -389,12 +418,12 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 -- Move and Shoot enemy
 Turret = Object:new({class = "Turret"})
 
-	function Turret:new(pos, targetPos, velScalar, fireDelay, bulletLevel, health, turretType)
+	function Turret:new(pos, targetPos, velScalar, fireDelay, bulletLevel, health, turretType, tweenLength)
 		turret = Object:new({pos = pos, targetPos = targetPos or Vector:new(0,0),
 				  velScalar = velScalar or 50, turretType = turretType or "tank",
 				  fireDelay = fireDelay or 1, fireRate = fireDelay or 1, 
 				  bulletLevel = bulletLevel or 1, health = health or 100, life = life or 20,
-				  isTweened = false})
+				  isTweened = false, tweenLength = tweenLength or 50})
 		if turret.turretType == "tank" then
 			-- "tank" specific parameters
 			turret.width = 56
@@ -435,12 +464,12 @@ Turret = Object:new({class = "Turret"})
 
 		if not self.isTweened then
 			-- POSITION TWEEN
-			tween(20, self.posTweenTable,
+			tween(self.tweenLength, self.posTweenTable,
 					  self.targetTweenTable, "inOutQuad")
 			self.isTweened = true
 		end
 
-		self.direction = (turret.targetPos - turret.pos):normalize()
+		--self.direction = (turret.targetPos - turret.pos):normalize()
 
 		self.pos.x = self.posTweenTable.x
 		self.pos.y = self.posTweenTable.y
@@ -521,7 +550,6 @@ Turret = Object:new({class = "Turret"})
 
 		-- flash bang
 		love.graphics.draw(self.flashBangParticle, self.turretEnd.x, self.turretEnd.y)
-
 
 		-- draw the tank
 		tankAngle = self.direction:angle()

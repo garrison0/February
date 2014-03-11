@@ -71,7 +71,7 @@ Game = Object:new({class = "Game"})
 			table.insert(self.entities, player)
 
 			-- set up the level triggers
-			self.levelTriggers = {wave2 = true}
+			self.levelTriggers = {wave1 = true}
 			self.stateNotLoaded = false
 
 		elseif self.state == "test" and self.stateNotLoaded == true then
@@ -124,7 +124,8 @@ Game = Object:new({class = "Game"})
 				-- spawn enemies
 				for i = 1, 7 do
 					x_iter = 95 * i
-					enemy = Enemy:new(Vector:new(x_iter, 0), Vector:new(0, 300))
+					y_iter = math.random(-700, -350)
+					enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 300))
 					enemy.life = 5
 					table.insert(self.entities, enemy)
 				end
@@ -178,7 +179,7 @@ Game = Object:new({class = "Game"})
 				end
 
 				-- mean, scarey turret
-				local turret = Turret:new(Vector:new(350, -50), Vector:new(600, 300), 50, .8, 2, 350, "tank")
+				local turret = Turret:new(Vector:new(400, -10), Vector:new(400, 300), 50, .8, 2, 350, "tank", 20)
 				table.insert(self.entities, turret)
 
 			end
@@ -256,7 +257,7 @@ Game = Object:new({class = "Game"})
 					elseif self.levelData.delayTime < 0 then
 
 						-- spawn boss
-						boss = Boss:new(Vector:new(100, -150), Vector:new(100, 25), Vector:new(50,0), 600, 150, 2500, .05, game.player)
+						boss = Boss:new(Vector:new(100, -150), Vector:new(100, 25), Vector:new(50,0), 600, 150, 5000, .05, game.player)
 						table.insert(self.entities, boss)
 
 						self.levelData.delayTime = nil
