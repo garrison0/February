@@ -9,10 +9,6 @@ require "enemies"
 --[[
 TO DO:
 1. scrolling background
-
-3. bleeps and bloops
-
-4. particle effects for enemy/player deaths
 	
 5. some type of event handling (observer design pattern?)
 
@@ -20,8 +16,6 @@ TO DO:
 						 -- basically a meat shield, perhaps it can have a ground tank variation that scoots around
 
 11. a small, homing enemy -- like the scourge
-
-12. UI
 
 --]]
 
