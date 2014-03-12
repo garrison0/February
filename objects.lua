@@ -26,6 +26,40 @@ Game = Object:new({class = "Game"})
 		game.livesGraphic = love.graphics.newImage("/graphics/1up2.png")
 		game.playerGraphic = love.graphics.newImage("/graphics/ship.png")
 
+		-- ENEMY EXPLOSION PARTICLES
+		-- FIRE/SMOKE
+		local particleImage = love.graphics.newImage("/graphics/fireSmoke.png")
+		local p = love.graphics.newParticleSystem(particleImage, 255)
+		p:setEmissionRate(0)
+		p:setParticleLifetime(.5)
+		p:setSpread(1)
+		p:setSpeed(25)
+		p:setRadialAcceleration(33)
+		p:setTangentialAcceleration(33)
+		p:setSizes(.01, .8)
+		p:setSizeVariation(.8)
+		p:setRotation(2)
+		p:setSpin(.5)
+		p:setSpinVariation(.2)
+		p:setColors({245, 239, 51, 120}, {0, 0, 0, 100})
+		p:start()	
+		game.smallExplosionFireSmoke = p
+
+		-- FLASH
+		local particleImage = love.graphics.newImage("/graphics/flash.png")
+		local p = love.graphics.newParticleSystem(particleImage, 255)
+		p:setEmissionRate(0)
+		p:setParticleLifetime(.1)
+		p:setSpread(1)
+		p:setSpeed(1)
+		p:setRadialAcceleration(5)
+		p:setTangentialAcceleration(0)
+		p:setSizes(.01, .9, .01)
+		p:setSizeVariation(1)
+		p:setColors({255, 252, 179, 110}, {255, 252, 179, 10})
+		p:start()
+		game.smallExplosionFlash = p
+
 		setmetatable(game, self)
 		self.__index = self
 		return game
@@ -41,6 +75,10 @@ Game = Object:new({class = "Game"})
 	end
 
 	function Game:update(dt)
+
+		-- update particles
+		self.smallExplosionFlash:update(dt)
+		self.smallExplosionFireSmoke:update(dt)
 
 		-- keep track of mouse pos for various reasons.
 		self.mousePos = Vector:new(love.mouse.getX(), love.mouse.getY())
@@ -351,17 +389,20 @@ Game = Object:new({class = "Game"})
 	-- used to player death sounds, animations, spawn items, etc.
 	function Game:resolveDeath(entity)
 
+		local pos = entity.pos
 		if entity.class == "Enemy" then
 			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
 			smlExplosion:setPitch(2)
 			smlExplosion:setVolume(.5)
-			smlExplosion:play() 
+			smlExplosion:play()
+			self:explode("small", pos) 
 		elseif entity.class == "Turret" then
 			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
 			smlExplosion:setPitch(1.3)
 			smlExplosion:setVolume(.5)
 			smlExplosion:play() 
-			if math.random(1, 1) == 1 then 
+			self:explode("small", pos)
+			if math.random(1, 10) == 1 then 
 				powerup = PowerUp:new(entity.pos, 10)
 				table.insert(self.entities, powerup)
 			end
@@ -370,6 +411,18 @@ Game = Object:new({class = "Game"})
 
 		elseif entity.class == "Boss" then
 
+		end
+
+	end
+
+	-- explosionType : string, pos : Vector
+	function Game:explode(explosionType, pos)
+
+		if explosionType == "small" then
+			self.smallExplosionFlash:setPosition(pos.x, pos.y)
+			self.smallExplosionFireSmoke:setPosition(pos.x, pos.y)
+			self.smallExplosionFireSmoke:emit(500)
+			self.smallExplosionFlash:emit(500)
 		end
 
 	end
@@ -650,6 +703,7 @@ PowerUp = Object:new({class = "PowerUp"})
 							  lifetime = lifetime or 0,
 							  width = 25, height = 25,
 							  time = 0})
+		powerup.image = love.graphics.newImage("/graphics/powerup1.png")
 		setmetatable(powerup, self)
 		self.__index = self
 		return powerup
@@ -673,12 +727,8 @@ PowerUp = Object:new({class = "PowerUp"})
 
 	function PowerUp:draw()
 
-		local p1 = self.pos 
-		local p2 = Vector:new(self.pos.x + self.width, self.pos.y)
-		local p3 = Vector:new(self.pos.x, self.pos.y + self.height)
-		local p4 = Vector:new(self.pos.x + self.width, self.pos.y + self.height)
-		love.graphics.polygon("line", p1.x, p1.y, p2.x, p2.y, p4.x, p4.y, p3.x, p3.y)
-		love.graphics.print("P", p1.x + self.width/3, p1.y + self.height/3)
+		love.graphics.draw(self.image, self.pos.x, self.pos.y)
+		
 	end
 
 	function PowerUp:update(dt)

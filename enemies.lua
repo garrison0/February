@@ -26,7 +26,7 @@ Enemy = Object:new({class = "Enemy"})
 		end
 
 		-- PARTICLE SYSTEM : ROCKET FIRE
-		local particleImage = love.graphics.newImage("/graphics/particle.png")
+		local particleImage = love.graphics.newImage("/graphics/fireSmoke.png")
 		local p = love.graphics.newParticleSystem(particleImage, 255)
 		p:setEmissionRate(120)
 		p:setParticleLifetime(.25)
@@ -35,12 +35,12 @@ Enemy = Object:new({class = "Enemy"})
 		p:setSpeed(50)
 		p:setRadialAcceleration(10)
 		p:setTangentialAcceleration(0)
-		p:setSizes(.9, .01)
+		p:setSizes(.15, .01)
 		p:setSizeVariation(.3)
 		p:setRotation(0)
 		p:setSpin(0)
 		p:setSpinVariation(0)
-		p:setColors({242, 51, 51, 220}, {237, 218, 200, 10})
+		p:setColors({255, 210, 87, 220}, {237, 238, 230, 10})
 		p:stop()
 		enemy.rocketParticles = p
 

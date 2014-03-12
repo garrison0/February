@@ -190,6 +190,13 @@ function love.draw()
 	end
 
 	if (string.sub(game.state, 1, 5) == "level" or game.state == "test") and game.stateNotLoaded == false then
+	
+		-- draw game explosions?
+		local x, y = game.smallExplosionFlash:getPosition()
+		love.graphics.draw(game.smallExplosionFlash)
+		local x, y = game.smallExplosionFireSmoke:getPosition()
+		love.graphics.draw(game.smallExplosionFireSmoke)
+
 	    -- UI
 	    fps = love.timer.getFPS()
 	    -- lives
