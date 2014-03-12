@@ -39,7 +39,7 @@ Game = Object:new({class = "Game"})
 		p:setSizes(.01, .8)
 		p:setSizeVariation(.6)
 		p:setRotation(0, math.pi)
-		p:setSpin(0, .5, 1)
+		p:setSpin(0, math.pi)
 		p:setColors({245, 239, 51, 120}, {21, 21, 21, 111})
 		p:start()	
 		game.smallExplosionFireSmoke = p
@@ -394,6 +394,7 @@ Game = Object:new({class = "Game"})
 			smlExplosion:setPitch(2)
 			smlExplosion:setVolume(.5)
 			smlExplosion:play()
+			pos = pos + 16
 			self:explode("small", pos) 
 		elseif entity.class == "Turret" then
 			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
