@@ -11,7 +11,8 @@ Game = Object:new({class = "Game"})
 		love.window.setMode(width, height, {fullscreen = fullscreen or false})
 		local game = {width = width or 0, height = height or 0, 
 					 stateNotLoaded = true, triggerNotLoaded = true, 
-					 fullscreen = fullscreen or false, playerLives = 3}
+					 fullscreen = fullscreen or false, playerLives = 3,
+					 title = "SHMUP"}
 
 		game.state = initial_state or "level1"
 
@@ -24,7 +25,7 @@ Game = Object:new({class = "Game"})
 
 		-- UI stuff. Don't mind me ^^'
 		game.livesGraphic = love.graphics.newImage("/graphics/1up2.png")
-		game.playerGraphic = love.graphics.newImage("/graphics/ship.png")
+		game.playerGraphic = love.graphics.newImage("/graphics/shipMiddle.png")
 
 		-- ENEMY EXPLOSION PARTICLES
 		-- FIRE/SMOKE
@@ -33,14 +34,14 @@ Game = Object:new({class = "Game"})
 		p:setEmissionRate(0)
 		p:setParticleLifetime(.5)
 		p:setSpread(2*math.pi)
-		p:setSpeed(5, 50)
-		p:setRadialAcceleration(0, 50)
-		p:setTangentialAcceleration(0, 5)
-		p:setSizes(.01, .8)
-		p:setSizeVariation(.6)
-		p:setRotation(0, math.pi)
-		p:setSpin(0, math.pi)
-		p:setColors({245, 239, 51, 120}, {21, 21, 21, 111})
+		p:setSpeed(50, 0)
+		p:setRadialAcceleration(0, 30)
+		p:setTangentialAcceleration(0, 10)
+		p:setSizes(.01, .5)
+		p:setSizeVariation(.8)
+		p:setRotation(0, 2*math.pi)
+		p:setSpin(0, 3, 5)
+		p:setColors({245, 239, 51, 120}, {21, 21, 21, 121})
 		p:start()	
 		game.smallExplosionFireSmoke = p
 
@@ -54,6 +55,7 @@ Game = Object:new({class = "Game"})
 		p:setRadialAcceleration(5)
 		p:setTangentialAcceleration(0)
 		p:setSizes(.01, .9, 0)
+		p:setRotation(0, 2*math.pi)
 		p:setSizeVariation(1)
 		p:setColors({255, 252, 179, 110}, {255, 252, 179, 0})
 		p:start()
@@ -102,7 +104,7 @@ Game = Object:new({class = "Game"})
 			self.entities = {}
 
 			-- load initial level 1 things
-			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
+			local player = Player:new(Vector:new(350, 350))
 			game.player = player
 			game.playerLives = 3
 			table.insert(self.entities, player)
@@ -114,9 +116,27 @@ Game = Object:new({class = "Game"})
 		elseif self.state == "test" and self.stateNotLoaded == true then
 			
 			-- Test things here!
-			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250))
+			local player = Player:new(Vector:new(350, 350))
 			game.player = player
 			table.insert(self.entities, player)
+
+			self.stateNotLoaded = false
+
+		elseif self.state == "AITest" and self.stateNotLoaded == true then
+
+			--local player = Player:new(Vector:new(350, 350))
+			--game.player = player
+			--table.insert(self.entities, player)
+			for i = 1,14 do
+				local pos = Vector:new(math.random(50, self.width-50), math.random(50, self.height-50))
+				local vel = Vector:new(math.random(-150, 150), math.random(-150, 150))
+				if i % 14 == 0 then
+					enemy = SteeringEnemy:new(4, 10, pos, vel, 5, 250, 0, "wander")
+				else
+					enemy = SteeringEnemy:new(7, 5, pos, vel, 4, 275, 0, "flock")
+				end
+				table.insert(self.entities, enemy)
+			end
 
 			self.stateNotLoaded = false
 
@@ -161,21 +181,27 @@ Game = Object:new({class = "Game"})
 				-- spawn enemies
 				for i = 1, 7 do
 					x_iter = 95 * i
-					y_iter = math.random(-700, -350)
+					y_iter = math.random(-1500, -300)
 					enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 300))
-					enemy.life = 5
+					enemy.life = 15
 					table.insert(self.entities, enemy)
 				end
 
 				-- spawn turrets
-				for i = 1, 6 do
-					x_iter = 67 + (i - 1) * game.width/6
-					y_iter = math.abs(x_iter - halfWidth) - halfWidth
-					local pos = Vector:new(x_iter, y_iter)
-					targetPos = Vector:new(pos.x, pos.y + 450)
-					turret = Turret:new(pos, targetPos, 50, .4, 1, 100)
-					table.insert(self.entities, turret)
-				end		
+				pos = Vector:new(125, -200)
+				targetPos = Vector:new(pos.x, pos.y + 750)
+				turret = Turret:new(pos, targetPos, 50, .4, 1, 100, "tank", 45)
+				table.insert(self.entities, turret)	
+
+				pos = Vector:new(350, -722)
+				targetPos = Vector:new(pos.x, pos.y + 1000)
+				turret = Turret:new(pos, targetPos, 50, .4, 1, 100, "tank", 45)
+				table.insert(self.entities, turret)		
+
+				pos = Vector:new(625, -400)
+				targetPos = Vector:new(pos.x, pos.y + 800)
+				turret = Turret:new(pos, targetPos, 50, .4, 1, 100, "tank", 45)
+				table.insert(self.entities, turret)			
 
 			end
 
@@ -215,8 +241,12 @@ Game = Object:new({class = "Game"})
 					table.insert(self.entities, enemy)
 				end
 
-				-- mean, scarey turret
-				local turret = Turret:new(Vector:new(400, -10), Vector:new(400, 300), 50, .8, 2, 350, "tank", 20)
+				-- mean, scarey turrets
+				local turret = Turret:new(Vector:new(400, -100), Vector:new(400, 200), 50, .8, 2, 200, "tank", 39)
+				table.insert(self.entities, turret)
+				local turret = Turret:new(Vector:new(75, -400), Vector:new(250, 450), 50, .8, 2, 200, "tank", 45)
+				table.insert(self.entities, turret)
+				local turret = Turret:new(Vector:new(600, -700), Vector:new(520, 350), 50, .8, 2, 200, "tank", 48)
 				table.insert(self.entities, turret)
 
 			end
@@ -226,6 +256,14 @@ Game = Object:new({class = "Game"})
 				-- to delay his spawning
 				self.levelData.delayTime = 3
 
+			end
+
+			if trigger == "levelEnd" then
+
+				-- flag + time for how long the explosion animation will last
+				self.levelData.delayTime = 4
+				self.levelData.explosionDelay = .32
+				
 			end
 		end
 	end
@@ -311,12 +349,23 @@ Game = Object:new({class = "Game"})
 					end
 					if boss[1] == nil then
 
+						self.title = "SHMUP -- OH AND.. YOU WON."
 						self.state = "menu"
 						self.stateNotLoaded = true
 						self.triggerNotLoaded = true
 
 					end
 				end
+			end
+
+			if trigger == "levelEnd" then
+
+				-- if detect(self.mouseClick, self.startButton) then
+				-- 	self.state = "level1"
+				-- 	self.stateNotLoaded = true
+				-- 	self.triggerNotLoaded = true
+				-- end
+
 			end
 		end
 	end
@@ -329,11 +378,23 @@ Game = Object:new({class = "Game"})
 			-- who shot it? {player, enemy}
 			if a.owner == "player" then
 				-- hit a default enemy
-				if b.class == "Enemy" or b.class == "Turret" then
+				if b.class == "Enemy" then
 					-- result
 					b.health = b.health - a.damage
 					a.isDead_ = true
 					
+				end
+
+				-- hit a 'turret' type
+				if b.class == "Turret" then 
+					-- result
+					attackedSound = love.audio.newSource("/audio/enemyHit.wav")
+					attackedSound:setPitch(.5)
+					attackedSound:setVolume(.6)
+					attackedSound:play()
+					b.health = b.health - a.damage
+					b.gotHitTimer = 0
+					a.isDead_ = true
 				end
 
 				-- hit boss 1
@@ -391,24 +452,35 @@ Game = Object:new({class = "Game"})
 		local pos = entity.pos
 		if entity.class == "Enemy" then
 			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
-			smlExplosion:setPitch(2)
-			smlExplosion:setVolume(.5)
+			smlExplosion:setPitch(2.2)
+			smlExplosion:setVolume(.4)
+			local snappyPart = love.audio.newSource("/audio/snappyExplosion.wav", "static")
+			snappyPart:setPitch(.7)
+			snappyPart:setVolume(.1)
+			snappyPart:play()
 			smlExplosion:play()
 			pos = pos + 16
 			self:explode("small", pos) 
 		elseif entity.class == "Turret" then
 			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
 			smlExplosion:setPitch(1.3)
-			smlExplosion:setVolume(.5)
+			smlExplosion:setVolume(.4)
 			smlExplosion:play() 
+
 			self:explode("small", pos)
-			if math.random(1, 10) == 1 then 
+			if math.random(1, 4) == 1 then 
 				powerup = PowerUp:new(entity.pos, 10)
 				table.insert(self.entities, powerup)
 			end
 
 		elseif entity.class == "Player" then
+			pos = pos + 16
+			local smlExplosion = love.audio.newSource("/audio/smallExplosion.wav", "static")
+			smlExplosion:setPitch(.4)
+			smlExplosion:setVolume(.9)
+			smlExplosion:play() 
 
+			self:explode("small", pos)
 		elseif entity.class == "Boss" then
 
 		end
@@ -421,8 +493,8 @@ Game = Object:new({class = "Game"})
 		if explosionType == "small" then
 			self.smallExplosionFlash:setPosition(pos.x, pos.y)
 			self.smallExplosionFireSmoke:setPosition(pos.x, pos.y)
-			self.smallExplosionFireSmoke:emit(8)
-			self.smallExplosionFlash:emit(45)
+			self.smallExplosionFireSmoke:emit(21)
+			self.smallExplosionFlash:emit(30)
 		end
 
 	end
@@ -495,12 +567,13 @@ CircleObstacle = Object:new({class = "CircleObstacle"})
 
 Bullet = Object:new({class = "Bullet"})
 
-	function Bullet:new(pos, vel, life, damage, owner)
+	function Bullet:new(pos, vel, life, damage, owner, bulletType)
 
 		local bullet = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			life = life or 0, damage = damage or 0,
-			owner = owner or "player", isDead_ = false
+			owner = owner or "player", isDead_ = false,
+			bulletType = bulletType or "single"
 		})
 
 		if bullet.owner == "enemy" then
@@ -508,10 +581,17 @@ Bullet = Object:new({class = "Bullet"})
 			bullet.width = 8
 			bullet.height = 8
 		elseif bullet.owner == "player" then
-			bullet.image = love.graphics.newImage("/graphics/playerbullet.png")
-			bullet.width = 6 
-			bullet.height = 12
+			if bullet.bulletType == "single" then
+				bullet.image = love.graphics.newImage("/graphics/playerbullet.png")
+				bullet.width = 6 
+				bullet.height = 12
+			elseif bullet.bulletType == "double" then
+				bullet.image = love.graphics.newImage("/graphics/playerDoubleBullet.png")
+				bullet.width = 16
+				bullet.height = 12
+			end
 		end
+
 		setmetatable(bullet,self)
 		self.__index = self
 		return bullet

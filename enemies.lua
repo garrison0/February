@@ -73,6 +73,11 @@ Enemy = Object:new({class = "Enemy"})
 
 		end
 
+		-- die if too far front 
+		if (self.pos.y - self.height > game.height) then
+			self.life = 0
+		end 
+
 		-- moves like a wave
 		if self.pathingType == "wave" then
 
@@ -141,7 +146,7 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 							behaviorType = behaviorType or "seek", target = target or Vector:new(400, 400)})
 		self.__index = self
 		setmetatable(enemy, self)
-		if behaviorType == "wandering" then enemy.initializeSteering = true end
+		if behaviorType == "wander" then enemy.initializeSteering = true end
 		return enemy
 
 	end
@@ -205,7 +210,7 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 			-- find members of a local neighborhood
 			self.neighbors = {}
 			neighborhood_distance = 100
-			for i, v in ipairs(enemies) do
+			for i, v in ipairs(game.entities) do
 
 				distance_between = (v.pos - self.pos):norm()
 				if distance_between <= neighborhood_distance then
@@ -280,7 +285,7 @@ SteeringEnemy = Object:new({class = "SteeringEnemy"})
 		end
 
 		-- random steering
-		if self.behaviorType == "wandering" then
+		if self.behaviorType == "wander" then
 
 			-- steering movement is constrained to the perimeter of a circle 
 			-- in front of the vehicle
@@ -423,7 +428,8 @@ Turret = Object:new({class = "Turret"})
 				  velScalar = velScalar or 50, turretType = turretType or "tank",
 				  fireDelay = fireDelay or 1, fireRate = fireDelay or 1, 
 				  bulletLevel = bulletLevel or 1, health = health or 100, life = life or 20,
-				  isTweened = false, tweenLength = tweenLength or 50})
+				  isTweened = false, tweenLength = tweenLength or 50,
+				  gotHitTimer = 0, gotHit = false})
 		if turret.turretType == "tank" then
 			-- "tank" specific parameters
 			turret.width = 56
@@ -458,9 +464,12 @@ Turret = Object:new({class = "Turret"})
 
 	function Turret:update(dt)
 
-		-- for i,v in pairs(game.entities) do
-		-- 	if v.class == "Bullet" then print(v.pos) end
-		-- end
+		self.gotHitTimer = self.gotHitTimer + dt
+		if self.gotHitTimer <= .1 then
+			self.gotHit = true
+		else
+			self.gotHit = false
+		end
 
 		if not self.isTweened then
 			-- POSITION TWEEN
@@ -469,7 +478,10 @@ Turret = Object:new({class = "Turret"})
 			self.isTweened = true
 		end
 
-		--self.direction = (turret.targetPos - turret.pos):normalize()
+		-- die if too far front 
+		if (self.pos.y - self.height > game.height) then
+			self.life = 0
+		end 
 
 		self.pos.x = self.posTweenTable.x
 		self.pos.y = self.posTweenTable.y
@@ -552,6 +564,9 @@ Turret = Object:new({class = "Turret"})
 		love.graphics.draw(self.flashBangParticle, self.turretEnd.x, self.turretEnd.y)
 
 		-- draw the tank
+		if self.gotHit then
+			love.graphics.setColor(221, 221, 221, 201)
+		end
 		tankAngle = self.direction:angle()
 		love.graphics.draw(self.image, self.pos.x, self.pos.y, tankAngle, 1, 1, self.width/2, self.height/2)
 
@@ -565,6 +580,9 @@ Turret = Object:new({class = "Turret"})
 		self.turretEnd = self.pos + turret_to_player * 46
 		love.graphics.draw(self.turretImage, self.pos.x, self.pos.y, turretAngle, 1, 1, 8, 8)
 
+		-- reset color
+		love.graphics.setColor(255, 255, 255, 255)
+
 	end
 
 -- First Boss
@@ -577,8 +595,24 @@ Boss = Object:new({class = "Boss"})
 			posTarget = posTarget or Vector:new(50, 50),
 			health = health or 0, width = width or 0, height = height or 0,
 			fireRate = fireDelay or .5, fireDelay = fireDelay or .5,
-			phase = 1, target = target
+			phase = 1, target = target, gunDelay = 1,
+			gotHitTimer = .08, gotHit = false,
 		})
+		boss.gunDelay = .8
+
+		-- PARTICLE SYSTEM : FLASH BANG
+		local particleImage = love.graphics.newImage("/graphics/particle.png")
+		local p = love.graphics.newParticleSystem(particleImage, 255)
+		local emitRate = 1 / boss.fireDelay
+		p:setEmissionRate(emitRate)
+		p:setParticleLifetime(1 / 30)
+		p:setSizes(2.5)
+		p:setSizeVariation(0)
+		p:setColors({255, 247, 247, 140}, {255, 240, 240, 10})
+		p:stop()
+		boss.flashBangParticleLeft = p
+		boss.flashBangParticleRight = p
+
 		setmetatable(boss, self)
 		self.__index = self
 		return boss
@@ -586,6 +620,17 @@ Boss = Object:new({class = "Boss"})
 	end
 
 	function Boss:update(dt)
+
+		self.gotHitTimer = self.gotHitTimer + dt
+
+		if self.gotHitTimer <= .1 then
+			self.gotHit = true
+		else
+			self.gotHit = false
+		end
+
+		self.flashBangParticleRight:update(dt)
+		self.flashBangParticleLeft:update(dt)
 
 		-- approached the position yet? (introduces the boss normally)
 		if not self.reachedTarget then
@@ -619,6 +664,15 @@ Boss = Object:new({class = "Boss"})
 			points = {p7, p8}
 
 			if self.fireDelay <= 0 then
+
+				self.gunDelay = self.gunDelay - .5
+				if self.gunDelay <= 0 then
+					local gunSound = love.audio.newSource("/audio/machineGun.wav")
+					gunSound:play()
+					gunSound:setPitch(.6)
+					gunSound:setVolume(.4)
+					self.gunDelay = .8
+				end
 
 				for i = 1, 2 do
 
@@ -683,6 +737,10 @@ Boss = Object:new({class = "Boss"})
 
 	function Boss:draw()
 
+		if self.gotHit then
+			love.graphics.setColor(221, 221, 221, 201)
+		end
+
 		-- main shape
 		local p1 = Vector:new(self.pos.x, self.pos.y + self.height / 2)
 		local p2 = Vector:new(self.pos.x + self.width / 8, self.pos.y)
@@ -700,6 +758,7 @@ Boss = Object:new({class = "Boss"})
 									  p7.x + 10, p7.y, p7.x, p7.y + 25, p7.x - 10, p7.y, 
 									  p8.x + 10, p8.y, p8.x, p8.y + 25, p8.x - 10, p8.y,
 									  p3.x, p3.y)
+		love.graphics.setColor(255, 255, 255, 255)
 	end
 
 -- TO BE DETERMINED.. Springy/Rotationy Thing

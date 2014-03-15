@@ -2,7 +2,7 @@ require "object"
 
 Player = Object:new({class = "Player"})
 
-	function Player:new(pos, vel, invul_)
+	function Player:new(pos, invul_)
 		local player = Object:new({
 			pos = pos or Vector:new(0,0), vel = vel or Vector:new(0,0),
 			shooting = false, fire_delay = .2, 
@@ -48,9 +48,11 @@ Player = Object:new({class = "Player"})
 
 		-- ANIMATION
 		player.animation = {}
-		player.animation.middle = love.graphics.newImage("/graphics/ship.png")
+		player.animation.middle = love.graphics.newImage("/graphics/shipMiddle.png")
 		player.animation.left1 = love.graphics.newImage("/graphics/shipLeft1.png")
+		player.animation.left2 = love.graphics.newImage("/graphics/shipLeft2.png")
 		player.animation.right1 = love.graphics.newImage("/graphics/shipRight1.png")
+		player.animation.right2 = love.graphics.newImage("/graphics/shipRight2.png")
 		player.animation.delayTime = 0
 		player.frame = 1
 		player.image = player.animation.middle
@@ -74,10 +76,32 @@ Player = Object:new({class = "Player"})
 
 	function Player:draw()
 
-		love.graphics.draw(self.flashBangParticle, self.pos.x + 15, self.pos.y - 8)
+		-- FRAME 1 = MIDDLE POSITION : animation.middle
+		-- FRAME 2 = FIRST LEFT ROLL : animation.left1
+		-- FRAME 3 = FIRST RIGHT ROLL: animation.right1
+		-- FRAME 4 = SECOND RIGHT ROLL:animation.right2
+		-- FRAME 5 = SECOND LEFT ROLL: animation.left2
+		if self.invul_ then
+			love.graphics.setColor(255, 255, 255, 140)
+		else
+			-- draw rocket/flashBang
+			if self.frame == 1 then
+				rightOffset = 24
+				leftOffset = 6
+			elseif self.frame == 2 or self.frame == 3 then
+				rightOffset = 22
+				leftOffset = 8
+			elseif self.frame == 4 or self.frame == 5 then
+				rightOffset = 20
+				leftOffset = 10
+			end
+
+			love.graphics.draw(self.flashBangParticle, self.pos.x + 15, self.pos.y - 8)
+			love.graphics.draw(self.rightRocketParticles, self.pos.x + rightOffset, self.pos.y + self.height)
+			love.graphics.draw(self.leftRocketParticles, self.pos.x + leftOffset, self.pos.y + self.height)
+		end
 		love.graphics.draw(self.image, self.pos.x, self.pos.y)
-		love.graphics.draw(self.leftRocketParticles, self.pos.x + 24, self.pos.y + self.height)
-		love.graphics.draw(self.rightRocketParticles, self.pos.x + 6, self.pos.y + self.height)
+		love.graphics.setColor(255, 255, 255, 255)
 
 	end
 
@@ -102,7 +126,7 @@ Player = Object:new({class = "Player"})
 				self:animate(dt, "left")
 			end
 			-- idling? -- move back to middle
-			if not self.isMoving then
+			if not (self.isMovingLeft or self.isMovingRight) then
 				self:animate(dt, "idle")
 			end
 		end
@@ -163,7 +187,7 @@ Player = Object:new({class = "Player"})
 
 		-- shoot?
 		if self.fire_delay <= 0 then
-			if self.shooting then
+			if self.shooting and not self.invul_ then
 				self:shoot()
 			end
 		end
@@ -207,10 +231,14 @@ Player = Object:new({class = "Player"})
 	-- direction : rolling left or right? determined in update
 	function Player:animate(dt, direction)
 
-		local MIDDLE_TO_LEFT = .2
-		local MIDDLE_TO_RIGHT = .2
-		local LEFT_TO_MIDDLE = .3
-		local RIGHT_TO_MIDDLE = .3
+		local MIDDLE_TO_LEFT = .12
+		local MIDDLE_TO_RIGHT = .12
+		local LEFT_TO_MIDDLE = .1
+		local RIGHT_TO_MIDDLE = .1
+		local LEFT_TO_LEFT2 = .1
+		local RIGHT_TO_RIGHT2 = .1
+		local RIGHT2_TO_RIGHT = .1
+		local LEFT2_TO_LEFT = .1
 		local function moveOn(player, time)
 			if player.animation.delayTime > time then
 				player.animation.delayTime = 0
@@ -224,6 +252,8 @@ Player = Object:new({class = "Player"})
 		-- FRAME 1 = MIDDLE POSITION : animation.middle
 		-- FRAME 2 = FIRST LEFT ROLL : animation.left1
 		-- FRAME 3 = FIRST RIGHT ROLL: animation.right1
+		-- FRAME 4 = SECOND RIGHT ROLL:animation.right2
+		-- FRAME 5 = SECOND LEFT ROLL: animation.left2
 
 		-- MIDDLE POSITION -> FIRST LEFT ROLL
 		if self.frame == 1 and direction == "left" then
@@ -250,11 +280,43 @@ Player = Object:new({class = "Player"})
 			end
 		end 
 
+		-- FIRST LEFT ROLL -> SECOND LEFT ROLL
+		if self.frame == 2 and direction == "left" then
+			if moveOn(self, LEFT_TO_LEFT2) then
+				self.frame = 5
+				self.image = self.animation.left2
+			end
+		end
+
+		-- SECOND LEFT ROLL -> FIRST LEFT ROLL
+		if self.frame == 5 and (direction == "right" or direction == "idle") then
+			if moveOn(self, LEFT2_TO_LEFT) then
+				self.frame = 2
+				self.image = self.animation.left1
+			end
+		end
+
 		-- FIRST RIGHT ROLL -> MIDDLE POSITION
 		if self.frame == 3 and (direction == "left" or direction == "idle") then
 			if moveOn(self, RIGHT_TO_MIDDLE) then
 				self.frame = 1
 				self.image = self.animation.middle
+			end
+		end
+
+		-- FIRST RIGHT ROLL -> SECOND RIGHT ROLL 
+		if self.frame == 3 and direction == "right" then
+			if moveOn(self, RIGHT_TO_RIGHT2) then
+				self.frame = 4
+				self.image = self.animation.right2
+			end
+		end
+
+		-- SECOND RIGHT ROLL -> FIRST RIGHT ROLL
+		if self.frame == 4 and (direction == "left" or direction == "idle") then
+			if moveOn(self, RIGHT2_TO_RIGHT) then
+				self.frame = 3
+				self.image = self.animation.right1
 			end
 		end
 	end
@@ -266,28 +328,19 @@ Player = Object:new({class = "Player"})
 
 		-- level 1
 		if (self.bulletLevel == 1) then
-			local firstX = self.pos.x + (self.width/2 - 3) - 4 
-			local secondX = self.pos.x + (self.width/2 - 3) + 4
-			bullet = Bullet:new(Vector:new(firstX, self.pos.y - 8), 
-										Vector:new(0, 750), 1, 8, "player")
-
-			bullet2 = Bullet:new(Vector:new(secondX, self.pos.y - 8), 
-										Vector:new(0, 750), 1, 8, "player")
+			bullet = Bullet:new(Vector:new(self.pos.x + self.width/2 - 8, self.pos.y - 8), 
+										Vector:new(0, 750), 1, 16, "player", "double")
 
 			self.fire_delay = .2
 			table.insert(game.entities, bullet)
-			table.insert(game.entities, bullet2)
 		end
 
 		-- level 2
 		if (self.bulletLevel == 2) then
 			local firstX = self.pos.x + (self.width/2 - 3) - 4 
 			local secondX = self.pos.x + (self.width/2 - 3) + 4
-			bullet = Bullet:new(Vector:new(firstX, self.pos.y - 8), 
-										Vector:new(0, 750), 1, 8, "player")
-
-			bullet2 = Bullet:new(Vector:new(secondX, self.pos.y - 8), 
-										Vector:new(0, 750), 1, 8, "player")
+			bullet = Bullet:new(Vector:new(self.pos.x + self.width/2 - 8, self.pos.y - 8), 
+										Vector:new(0, 750), 1, 16, "player", "double")
 
 			bullet3 = Bullet:new(Vector:new(firstX - 4, self.pos.y), 
 										Vector:new(-150,700), 1, 6, "player")
@@ -297,7 +350,6 @@ Player = Object:new({class = "Player"})
 
 			self.fire_delay = .15
 			table.insert(game.entities, bullet)
-			table.insert(game.entities, bullet2)
 			table.insert(game.entities, bullet3)
 			table.insert(game.entities, bullet4)
 		end

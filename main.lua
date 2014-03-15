@@ -24,11 +24,14 @@ function love.load()
 	Test_Vector()
 	Physics_Tests()
 
+	love.graphics.setBackgroundColor(0, 0, 0, 255)
+
 	-- game
 	game = Game:new("menu", 800, 700, false)
 
 	-- set state to access test
 	--game.state = "test"
+	--game.state = "AITest"
 
 end
 
@@ -43,7 +46,7 @@ function love.update(dt)
 		if game.player.laserOn or game.player.isChargingLaser then
 			game.player.vel = Vector:new(50, 50)
 		else
-			game.player.vel = Vector:new(300, 250)
+			game.player.vel = Vector:new(245, 155)
 		end
 
 		if game.player.isDead_ then
@@ -56,7 +59,7 @@ function love.update(dt)
 				-- GAME OVER HERE.. NOT IMPLEMENTED YET
 				game.gameOver_ = true
 			end
-			local player = Player:new(Vector:new(350, 350), Vector:new(300, 250), true)
+			local player = Player:new(Vector:new(350, 350), true)
 			game.player = player
 			table.insert(game.entities, game.player)
 		end
@@ -171,7 +174,7 @@ function love.draw()
 
 	if game.state == "menu" then
 
-		love.graphics.print("SHMUP", 100, 50)
+		love.graphics.print(game.title, 100, 50)
 		game.startButton:draw()
 
 	end
