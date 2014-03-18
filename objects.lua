@@ -8,6 +8,10 @@ Game = Object:new({class = "Game"})
 
 	function Game:new(initial_state, width, height, fullscreen)
 
+		if fullscreen then
+			love.window.setFullscreen(true)
+			width, height = love.window.getDimensions()
+		end
 		love.window.setMode(width, height, {fullscreen = fullscreen or false})
 		local game = {width = width or 0, height = height or 0, 
 					 stateNotLoaded = true, triggerNotLoaded = true, 
@@ -174,7 +178,7 @@ Game = Object:new({class = "Game"})
 
 		-- level 1 triggers
 		if self.state == "level1" then
-			
+
 			if trigger == "wave1" then
 
 				halfWidth = game.width / 2
@@ -262,7 +266,7 @@ Game = Object:new({class = "Game"})
 
 				-- flag + time for how long the explosion animation will last
 				self.levelData.delayTime = 4
-				self.levelData.explosionDelay = .32
+				self.levelData.explosionDelay = .3
 				
 			end
 		end
@@ -286,6 +290,36 @@ Game = Object:new({class = "Game"})
 
 		-- level 1 triggers
 		if self.state == "level1" then
+
+			-- UHHHHHHHHHHHHHHH
+			if self.levelData.spawningDelay == nil then
+				self.levelData.spawningDelay = 12
+			end
+
+			self.levelData.spawningDelay = self.levelData.spawningDelay - dt
+			if self.levelData.spawningDelay < 0 then
+
+				if trigger ~= "boss" then
+					x_seed = math.random(250, self.width - 350)
+					for i = 1,5 do 
+
+						x_iter = x_seed - (40 * i)
+						if i == 2 then
+							y_iter = -500 - 45
+						elseif i == 1 then
+							y_iter = -500 - 90
+						else
+							y_iter = -500 - ((i % 3) * 45)
+						end
+						enemy = Enemy:new(Vector:new(x_iter, y_iter), Vector:new(0, 300))
+						enemy.life = 15
+						table.insert(self.entities, enemy)
+
+					end 
+				end
+				self.levelData.spawningDelay = 8
+
+			end
 
 			-- "wave" triggers -- spawn enemies and wait till they're dead.
 			if string.sub(trigger, 1, 4) == "wave" then
